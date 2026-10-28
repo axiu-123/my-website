@@ -56,16 +56,42 @@ const config = {
     apiKey: process.env.COMPOSE_API_KEY || '',
   },
 
-  // 翻译服务：默认优先走 Google 免费接口（无需密钥、质量好），失败时回退 MyMemory
+  // 翻译服务：多源自动兜底（详见 routes/translate.js 顶部说明）
   translate: {
+    // 源优先级，逗号分隔；留空使用默认 bing,google,google2,simply,mymemory
+    providerOrder: process.env.TRANSLATE_PROVIDER_ORDER || '',
+    // DeepL API Free（可选，注册免费、无需信用卡；配置后质量与稳定性最佳）
+    deeplKey: process.env.DEEPL_API_KEY || '',
+
+    // Bing 翻译网页接口的候选域名（无需密钥，云主机上最稳）
+    bingHosts: (process.env.TRANSLATE_BING_HOSTS || 'cn.bing.com,www.bing.com')
+      .split(',')
+      .map((s) => s.trim())
+      .filter(Boolean),
+
+    // Google 两个免费端点
     googleEndpoint:
       process.env.TRANSLATE_GOOGLE_ENDPOINT ||
       'https://translate.googleapis.com/translate_a/single',
-    // MyMemory 兜底（可选：填一个邮箱可获得更高免费额度）
+    googleAltEndpoint:
+      process.env.TRANSLATE_GOOGLE_ALT_ENDPOINT ||
+      'https://clients5.google.com/translate_a/t',
+
+    // SimplyTranslate 公共实例（代理 Google，第三方服务，可能失效）
+    simplyHosts: (
+      process.env.TRANSLATE_SIMPLY_HOSTS ||
+      'https://simplytranslate.org,https://translate.josias.dev'
+    )
+      .split(',')
+      .map((s) => s.trim())
+      .filter(Boolean),
+
+    // MyMemory 兜底（按 IP 每日限额；填邮箱可提高额度）
     endpoint:
       process.env.TRANSLATE_ENDPOINT ||
       'https://api.mymemory.translated.net/get',
     email: process.env.TRANSLATE_EMAIL || '',
+
     // 译文缓存时长（毫秒），减少重复请求
     cacheTtl: Number(process.env.TRANSLATE_CACHE_TTL) || 10 * 60 * 1000,
   },
