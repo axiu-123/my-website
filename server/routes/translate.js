@@ -79,7 +79,7 @@ function request(url, opts = {}, _depth = 0) {
         let data = '';
         stream.setEncoding('utf8');
         stream.on('data', (c) => (data += c));
-        stream.on('end', () => resolve({ status, headers: res.headers, body: data }));
+        stream.on('end', () => resolve({ status, headers: res.headers, body: data, url }));
         stream.on('error', reject);
       }
     );
@@ -114,6 +114,22 @@ async function postForm(url, fields, headers = {}, timeout = 12000) {
   return r.body;
 }
 
+/** POST JSON（用于大模型接口） */
+async function postJson(url, payload, headers = {}, timeout = 20000) {
+  const body = JSON.stringify(payload);
+  const r = await request(url, {
+    method: 'POST',
+    body,
+    timeout,
+    headers: {
+      'Content-Type': 'application/json',
+      'Content-Length': Buffer.byteLength(body),
+      ...headers,
+    },
+  });
+  if (r.status >= 400) throw new Error('上游 HTTP ' + r.status);
+  return r.body;
+}
 /* ------------------------------------------------------------------ *
  * 方案 1：DeepL API Free（需密钥）
  * ------------------------------------------------------------------ */
@@ -152,6 +168,8 @@ async function deeplTranslate(text, from, to) {
  * ------------------------------------------------------------------ */
 const BING_LANG = { 'zh-CN': 'zh-Hans', 'zh-TW': 'zh-Hant', 'auto': 'auto-detect' };
 let bingSession = { cookie: '', ig: '', key: '', token: '', host: '', t: 0 };
+// 最近一次会话获取的调试信息（供 /diagnose?debug=1 查看）
+let bingDebug = {};
 
 function pickSetCookie(headers) {
   const sc = headers['set-cookie'];
@@ -172,8 +190,26 @@ async function refreshBingSession(force = false) {
       const r = await request(url, { timeout: 15000 });
       if (r.status >= 400) throw new Error('上游 HTTP ' + r.status);
       const html = r.body;
+      // 关键：跟随重定向后，真正的会话域名可能已经变了（如 cn.bing.com → www.bing.com）
+      let finalHost = host;
+      try {
+        finalHost = new URL(r.url || url).hostname;
+      } catch (e) {
+        /* 用原始 host */
+      }
       const ig = (html.match(/IG:"([A-Fa-f0-9]{16,})"/) || [])[1];
       const params = (html.match(/params_AbusePreventionHelper\s*=\s*\[([^\]]+)\]/) || [])[1];
+
+      bingDebug = {
+        requestHost: host,
+        finalHost,
+        pageStatus: r.status,
+        pageBytes: html.length,
+        igFound: !!ig,
+        tokenFound: !!params,
+        htmlPreview: html.slice(0, 200),
+      };
+
       if (!ig || !params) throw new Error('页面未包含会话参数');
       const parts = params.split(',');
       const key = parts[0].replace(/["'\s]/g, '');
@@ -185,12 +221,13 @@ async function refreshBingSession(force = false) {
         ig,
         key,
         token,
-        host,
+        host: finalHost,
         t: Date.now(),
       };
       return bingSession;
     } catch (e) {
       lastErr = e;
+      bingDebug = { ...bingDebug, requestHost: host, error: e.message };
     }
   }
   throw new Error('会话获取失败: ' + (lastErr ? lastErr.message : '未知'));
@@ -229,6 +266,12 @@ async function bingTranslate(text, from, to, retried = false) {
     data = JSON.parse(raw);
   } catch (e) {
     // 会话过期时返回的是 HTML，刷新后重试一次
+    bingDebug = {
+      ...bingDebug,
+      postHost: s.host,
+      postBytes: String(raw || '').length,
+      postPreview: String(raw || '').slice(0, 200),
+    };
     if (!retried) {
       await refreshBingSession(true);
       return bingTranslate(text, from, to, true);
@@ -344,10 +387,63 @@ async function myMemoryTranslate(text, from, to) {
 }
 
 /* ------------------------------------------------------------------ *
+ * 方案 7：大模型翻译（复用 DeepSeek 密钥，最稳、质量最好）
+ * ------------------------------------------------------------------ */
+const LANG_NAMES = {
+  'zh-CN': '简体中文',
+  'zh-TW': '繁体中文',
+  en: '英语',
+  ja: '日语',
+  ko: '韩语',
+  fr: '法语',
+  de: '德语',
+  es: '西班牙语',
+  ru: '俄语',
+  pt: '葡萄牙语',
+  it: '意大利语',
+  ar: '阿拉伯语',
+  th: '泰语',
+  vi: '越南语',
+};
+
+async function llmTranslate(text, from, to) {
+  const { apiKey, baseUrl, model } = config.deepseek;
+  if (!apiKey) throw new Error('未配置 DEEPSEEK_API_KEY');
+  const target = LANG_NAMES[to] || to;
+  const payload = {
+    model,
+    temperature: 0,
+    messages: [
+      {
+        role: 'system',
+        content:
+          `你是专业翻译引擎。把用户提供的文本翻译成${target}。` +
+          '只输出译文本身，不要解释、不要加引号、保留原有换行与语气。',
+      },
+      { role: 'user', content: text },
+    ],
+  };
+  const raw = await postJson(
+    baseUrl.replace(/\/+$/, '') + '/chat/completions',
+    payload,
+    { Authorization: 'Bearer ' + apiKey },
+    25000
+  );
+  const data = JSON.parse(raw);
+  const out =
+    data && data.choices && data.choices[0] && data.choices[0].message
+      ? data.choices[0].message.content
+      : '';
+  if (!out || !String(out).trim()) throw new Error('未返回译文');
+  return { translated: String(out).trim(), detected: from === 'auto' ? 'auto' : from };
+}
+
+/* ------------------------------------------------------------------ *
  * Provider 注册表 + 缓存
  * ------------------------------------------------------------------ */
 const PROVIDERS = {
   deepl: deeplTranslate,
+  llm: llmTranslate,
   bing: bingTranslate,
   google: googleTranslate,
   google2: googleAltTranslate,
@@ -355,18 +451,22 @@ const PROVIDERS = {
   mymemory: myMemoryTranslate,
 };
 
+function hasKeyFor(name) {
+  if (name === 'deepl') return !!config.translate.deeplKey;
+  if (name === 'llm') return !!config.deepseek.apiKey;
+  return true;
+}
+
 function providerList() {
   const order = String(config.translate.providerOrder || '')
     .split(',')
     .map((s) => s.trim())
     .filter((s) => s && PROVIDERS[s]);
-  return (order.length ? order : ['bing', 'google', 'google2', 'simply', 'mymemory'])
-    .filter((name) => {
-      // 未配置密钥的 deepl 直接跳过，避免无谓报错
-      if (name === 'deepl' && !config.translate.deeplKey) return false;
-      return true;
-    })
-    .map((name) => [name, PROVIDERS[name]]);
+  const base = order.length
+    ? order
+    : ['deepl', 'llm', 'bing', 'google', 'google2', 'simply', 'mymemory'];
+  // 未配置密钥的源直接跳过，避免无谓报错
+  return base.filter(hasKeyFor).map((name) => [name, PROVIDERS[name]]);
 }
 
 const cache = new Map();
@@ -442,7 +542,9 @@ router.get('/diagnose', async (req, res) => {
   res.json({
     order: providerList().map(([n]) => n),
     deeplConfigured: !!config.translate.deeplKey,
+    llmConfigured: !!config.deepseek.apiKey,
     results,
+    ...(String(req.query.debug || '') === '1' ? { bingDebug } : {}),
   });
 });
 
