@@ -98,8 +98,32 @@ DEEPSEEK_API_KEY=sk-xxxx      # 不填则 AI 聊天走本地情绪支持回退
 
 ---
 
+## 翻译源配置（云端部署后重要）
+
+免费公共接口（Google / Bing / MyMemory）都会**按 IP 限流**，而 Render / 云主机用的是共享出口 IP，很容易被限到全灭。表现是翻译页报「翻译源暂时不可用」。
+
+配置任意一个**有免费额度、无需信用卡**的正式接口即可永久解决（配一个就够，系统会自动优选）：
+
+| 方案 | 免费额度 | 是否需信用卡 | 环境变量 | 申请地址 |
+|------|----------|--------------|----------|----------|
+| **百度翻译（推荐，国内最省事）** | 5 万字符/天 | ❌ 不需要 | `BAIDU_TRANSLATE_APPID`、`BAIDU_TRANSLATE_KEY` | https://fanyi-api.baidu.com/ → 通用文本翻译 → 标准版 |
+| DeepL API Free | 50 万字符/月 | ❌ 不需要 | `DEEPL_API_KEY` | https://www.deepl.com/pro-api （选 Free） |
+| DeepSeek 大模型翻译 | 按量计费（很便宜） | ❌ 支付宝充值 | `DEEPSEEK_API_KEY` | https://platform.deepseek.com |
+| LibreTranslate 自建 | 无限 | ❌ 不需要 | `LIBRETRANSLATE_URL`（可选 `LIBRETRANSLATE_KEY`） | 自行部署 |
+
+**在 Render 里怎么加**：服务页 → 左侧 **Environment** → **Add Environment Variable** → 填 Key / Value → 保存后点 **Manual Deploy → Deploy latest commit**（或直接 Save 会自动重启）。
+
+**验证是否生效**：浏览器打开
+```
+https://<你的域名>/api/translate/diagnose
+```
+会逐个探测各源并显示 `ok` 与返回样句；加 `?debug=1` 还能看到 Bing 会话的详细失败原因。
+
+---
+
 ## 故障排查
 - 外网打不开：先确认 VM 控制台 Security List 已放行对应端口（Oracle 最常见坑）。
 - `npm start` 报错找不到模块：确认在 `aggregate-site` 目录下执行过 `npm install`。
 - AI 聊天只能情绪支持：未填 `DEEPSEEK_API_KEY`，属预期行为。
+- 翻译报「所有翻译源暂时不可用」：见上节「翻译源配置」，配一个免费密钥即可。
 - 音乐解析失败：第三方公共解析源 `api.imjad.cn` 可能失效，在 `.env` 的 `MUSIC_*` 换成你自建/合规的服务即可。

@@ -38,12 +38,28 @@
       out.className = 'result ok';
       out.innerHTML = `<b>译文：</b><br>${escapeHtml(r.translated)}<br><span class="note">（${r.service} · 目标语言 ${r.to}）</span>`;
     } catch (e) {
-      out.className = 'result error';
-      out.textContent = '翻译失败：' + e.message;
+      showTranslateError(out, e);
     } finally {
       btn.disabled = false;
     }
   });
+
+  // 翻译源全挂时给出可执行的修复指引，而不是只丢一句“失败”
+  function showTranslateError(node, e) {
+    node.className = 'result error';
+    if (/所有翻译源暂时不可用/.test(e.message)) {
+      node.innerHTML =
+        '<b>翻译源暂时不可用</b><br>' +
+        '云端服务器的共享 IP 被公共翻译接口限流了（Google / Bing / MyMemory 都会这样）。' +
+        '配置任意一个<b>免费密钥</b>即可永久解决：<br>' +
+        '① <b>百度翻译开放平台</b>（免费 5 万字符/天，无需信用卡）→ 拿 APPID + 密钥<br>' +
+        '② Render 后台 → 你的服务 → <b>Environment</b> → 添加 ' +
+        '<code>BAIDU_TRANSLATE_APPID</code>、<code>BAIDU_TRANSLATE_KEY</code> → 重新部署<br>' +
+        '<span class="note">也支持 <code>DEEPL_API_KEY</code>（DeepL 免费版）或 <code>DEEPSEEK_API_KEY</code>（大模型翻译）。</span>';
+      return;
+    }
+    node.textContent = '翻译失败：' + e.message;
+  }
 
   swap.addEventListener('click', () => {
     const f = fromSel.value;
@@ -150,9 +166,21 @@
       ocrStatus.className = 'result ok';
       ocrStatus.textContent = `识别完成，共 ${text.length} 个字符，正在翻译…`;
       ocrText.value = text;
-      const translated = await translateText(text);
-      ocrTrans.textContent = translated;
-      ocrResult.style.display = 'block';
+      try {
+        const translated = await translateText(text);
+        ocrTrans.textContent = translated;
+        ocrResult.style.display = 'block';
+        ocrStatus.textContent = `识别完成，共 ${text.length} 个字符`;
+      } catch (err) {
+        // OCR 成功但翻译失败：保留识别出的原文，方便用户手动复制
+        ocrStatus.className = 'result error';
+        ocrStatus.innerHTML =
+          /所有翻译源暂时不可用/.test(err.message)
+            ? '文字已识别（见下方文本框），但<b>翻译源被云端 IP 限流</b>。配置免费密钥可永久解决（详见「文字互译」页提示）。'
+            : '文字已识别，但翻译失败：' + escapeHtml(err.message);
+        ocrResult.style.display = 'block';
+        ocrTrans.textContent = '（翻译暂不可用，可直接复制上方原文）';
+      }
     } catch (e) {
       ocrStatus.className = 'result error';
       ocrStatus.textContent = 'OCR 失败：' + e.message;
