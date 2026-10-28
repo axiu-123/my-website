@@ -12,8 +12,7 @@ services:
     envVars:
       - key: NODE_ENV
         value: production
-      - key: PORT
-        value: 3000
+      # 注意：不要写死 PORT。Render 会注入 PORT 环境变量，服务端已读取 process.env.PORT。
       # 可选：填入后 AI 聊天使用真实 DeepSeek 模型，否则走本地情绪支持回退
       - key: DEEPSEEK_API_KEY
         sync: false      # 部署时在 Render 后台手动填写，不写入代码
