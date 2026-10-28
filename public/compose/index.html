@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>AI 智能作曲 · 多功能聚合站</title>
+<link rel="stylesheet" href="/assets/style.css" />
+<script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
+</head>
+<body>
+<header class="topbar" id="topbar"></header>
+<main>
+  <div class="panel">
+    <h2>🎼 AI 智能作曲（参考 Suno）</h2>
+    <p class="desc">用一句话描述你想要的曲风，或选择风格/情绪，本地生成式引擎会即时创作一段旋律与和声并播放。无需联网、无需密钥，也可在 .env 中接入 Suno 类外部服务获得更强能力。</p>
+
+    <label>创作提示词（自然语言，可选）</label>
+    <input type="text" id="prompt" placeholder="例如：一段欢快的电子舞曲，适合跑步" />
+
+    <div class="row">
+      <div>
+        <label>风格 / 情绪</label>
+        <select id="mood">
+          <option value="happy">欢快 Pop</option>
+          <option value="sad">悲伤 Ballad</option>
+          <option value="electronic">电子 / EDM</option>
+          <option value="chinese">古风 / 中国风</option>
+          <option value="lofi">Lo-Fi 放松</option>
+        </select>
+      </div>
+      <div>
+        <label>速度 (BPM)</label>
+        <input type="number" id="bpm" value="110" min="60" max="180" />
+      </div>
+      <div>
+        <label>小节数</label>
+        <input type="number" id="bars" value="4" min="2" max="16" />
+      </div>
+    </div>
+
+    <button class="primary" id="gen">🎲 生成并播放</button>
+    <button class="ghost" id="stop" style="margin-left:10px;">⏹ 停止</button>
+    <button class="ghost" id="dl" style="margin-left:10px;">⬇ 导出 WAV</button>
+
+    <div class="result" id="out" style="display:none;"></div>
+    <p class="note">说明：本页为端侧生成式作曲（Tone.js 合成），每次生成旋律带有随机性，可多次点击「生成并播放」获得不同版本。导出 WAV 由浏览器本地渲染完成，不占用服务器。</p>
+  </div>
+</main>
+<footer class="foot">多功能聚合站</footer>
+<script src="/assets/common.js"></script>
+<script src="/compose/app.js"></script>
+<script>renderNav('compose');</script>
+</body>
+</html>

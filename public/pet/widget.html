@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>桌宠</title>
+<style>
+  html,body{margin:0;height:100%;overflow:hidden;background:transparent;}
+  #vp{width:100vw;height:100vh;display:block;background:radial-gradient(circle at 50% 35%,#2a2f45,#14172a);}
+</style>
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+  }
+}
+</script>
+</head>
+<body>
+<canvas id="vp"></canvas>
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+const canvas = document.getElementById('vp');
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(45, 1, 0.1, 100);
+camera.position.set(0, 1.2, 6);
+
+const controls = new OrbitControls(camera, canvas);
+controls.enableDamping = true; controls.target.set(0, 0.8, 0);
+controls.enablePan = false;
+
+scene.add(new THREE.AmbientLight(0xffffff, 0.7));
+const d = new THREE.DirectionalLight(0xffffff, 1.1); d.position.set(3,5,4); scene.add(d);
+const p = new THREE.PointLight(0xff9bd2, 0.6, 50); p.position.set(-3,2,3); scene.add(p);
+
+function buildChibi(){
+  const g=new THREE.Group();
+  const skin=new THREE.MeshStandardMaterial({color:0xffd9b3,roughness:0.6});
+  const cloth=new THREE.MeshStandardMaterial({color:0x6d5efc,roughness:0.5});
+  const dark=new THREE.MeshStandardMaterial({color:0x222222});
+  const blush=new THREE.MeshStandardMaterial({color:0xff8fae,roughness:0.7});
+  const body=new THREE.Mesh(new THREE.SphereGeometry(0.9,32,32),cloth); body.position.y=0.2; body.scale.y=1.1; g.add(body);
+  const head=new THREE.Mesh(new THREE.SphereGeometry(1.0,32,32),skin); head.position.y=1.5; g.add(head);
+  const eye=new THREE.SphereGeometry(0.12,16,16);
+  const eL=new THREE.Mesh(eye,dark); eL.position.set(-0.35,1.6,0.9);
+  const eR=new THREE.Mesh(eye,dark); eR.position.set(0.35,1.6,0.9); g.add(eL,eR);
+  const bGeo=new THREE.SphereGeometry(0.16,16,16);
+  const bL=new THREE.Mesh(bGeo,blush); bL.position.set(-0.55,1.35,0.82); bL.scale.z=0.3;
+  const bR=new THREE.Mesh(bGeo,blush); bR.position.set(0.55,1.35,0.82); bR.scale.z=0.3; g.add(bL,bR);
+  const ant=new THREE.Mesh(new THREE.SphereGeometry(0.14,16,16),cloth); ant.position.set(0,2.55,0); g.add(ant);
+  return g;
+}
+const model = buildChibi();
+scene.add(model);
+
+const clock = new THREE.Clock();
+function resize(){
+  const w=window.innerWidth,h=window.innerHeight;
+  renderer.setSize(w,h,false); camera.aspect=w/h; camera.updateProjectionMatrix();
+}
+window.addEventListener('resize',resize); resize();
+
+function animate(){
+  requestAnimationFrame(animate);
+  const t=clock.getElapsedTime();
+  model.position.y = Math.sin(t*2)*0.06;
+  model.rotation.y = Math.sin(t*0.5)*0.2;
+  controls.update();
+  renderer.render(scene,camera);
+}
+animate();
+</script>
+</body>
+</html>

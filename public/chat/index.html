@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>AI 聊天 · 多功能聚合站</title>
+<link rel="stylesheet" href="/assets/style.css" />
+</head>
+<body>
+<header class="topbar" id="topbar"></header>
+<main>
+  <div class="panel">
+    <h2>💬 AI 聊天伙伴</h2>
+    <p class="desc">既能解答你的问题，也能在低落时给你情绪价值。配置 DeepSeek 密钥后由大模型驱动；未配置时使用内置情绪支持引擎，始终在线。</p>
+    <div id="modeBadge" class="tag gray">模式：检测中…</div>
+    <div class="chatbox" id="chat"></div>
+    <div class="row" style="margin-top:12px; align-items:flex-end;">
+      <div style="flex:1;">
+        <textarea id="input" placeholder="说点什么吧～可以问问题，也可以只是想找人聊聊"></textarea>
+      </div>
+      <button class="primary" id="send" style="margin-top:0;">发送</button>
+    </div>
+    <p class="note">配置方式：在项目根目录 <code>.env</code> 中设置 <code>DEEPSEEK_API_KEY=你的密钥</code>，重启服务即可切换为 DeepSeek 大模型。</p>
+  </div>
+</main>
+<footer class="foot">多功能聚合站</footer>
+<script src="/assets/common.js"></script>
+<script src="/chat/app.js"></script>
+<script>renderNav('chat');</script>
+</body>
+</html>

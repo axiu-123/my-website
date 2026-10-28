@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>桌面宠宠 · 多功能聚合站</title>
+<link rel="stylesheet" href="/assets/style.css" />
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+  }
+}
+</script>
+</head>
+<body>
+<header class="topbar" id="topbar"></header>
+<main>
+  <div class="panel">
+    <h2>🐾 桌面 Q 版宠宠</h2>
+    <p class="desc">启动后生成可爱的 Q 版 3D 桌宠。默认加载内置 Q 版模型，也支持粘贴「网上 DeepSeek Q 版模型」URL 或上传本地模型文件；兼容主流 3D 软件导出的格式。</p>
+
+    <div class="pet-stage">
+      <div id="viewport"></div>
+    </div>
+
+    <div class="row" style="margin-top:14px; align-items:flex-end;">
+      <div style="flex:1;">
+        <label>在线模型 URL（可选，默认使用内置 Q 版模型）</label>
+        <input type="text" id="modelUrl" placeholder="https://.../model.glb" />
+      </div>
+      <button class="ghost" id="loadUrl">加载在线模型</button>
+    </div>
+
+    <div class="row" style="margin-top:10px; align-items:center;">
+      <label style="margin:0;">上传本地模型文件</label>
+      <input type="file" id="file" accept=".glb,.gltf,.obj,.fbx" />
+    </div>
+
+    <div style="margin-top:12px;">
+      <button class="ghost" id="reset">恢复内置 Q 版模型</button>
+      <button class="ghost" id="widget">🪟 作为桌宠悬浮窗启动</button>
+    </div>
+
+    <p class="note" id="status">模型状态：内置 Q 版模型（程序生成，无需联网）。</p>
+  </div>
+
+  <div class="panel">
+    <h2>适配的主流 3D 软件与格式</h2>
+    <p class="desc">本桌宠基于 Three.js（WebGL）渲染，原生支持 glTF/GLB，并通过附加加载器支持 FBX / OBJ。以下为常见 3D 软件与其可导入本桌宠的格式对照：</p>
+    <table class="tbl">
+      <thead><tr><th>3D 软件</th><th>可导出并导入本桌宠的格式</th><th>说明</th></tr></thead>
+      <tbody>
+        <tr><td>Blender（开源）</td><td>glTF / GLB、FBX、OBJ</td><td>推荐导出 glTF 2.0（.glb 单文件最方便）</td></tr>
+        <tr><td>Autodesk Maya</td><td>FBX、glTF、OBJ</td><td>用 FBX 或 glTF 导出插件</td></tr>
+        <tr><td>Autodesk 3ds Max</td><td>FBX、glTF、OBJ</td><td>需安装 glTF / FBX 导出插件</td></tr>
+        <tr><td>Cinema 4D (C4D)</td><td>FBX、glTF、OBJ</td><td>原生支持 FBX / OBJ 导出</td></tr>
+        <tr><td>ZBrush</td><td>OBJ</td><td>雕刻模型常用 OBJ 交换</td></tr>
+        <tr><td>Sketchfab / Mixamo</td><td>glTF / FBX</td><td>角色/动画资源可直接下载后导入</td></tr>
+      </tbody>
+    </table>
+    <p class="note">提示：动画（骨骼）在 glTF/FBX 中可保留；OBJ 为静态网格，不带动画。若加载失败，请确认模型为上述受支持格式且未损坏。</p>
+  </div>
+</main>
+<footer class="foot">多功能聚合站</footer>
+<script src="/assets/common.js"></script>
+<script type="module" src="/pet/app.js"></script>
+<script>renderNav('pet');</script>
+</body>
+</html>

@@ -1,0 +1,20 @@
+# Render 一键部署配置（方案 C · 简易版）
+# 在 Render 控制台 "New" -> "Blueprint" 选择本仓库即可自动识别此文件。
+services:
+  - type: web
+    name: aggregate-site
+    runtime: node
+    plan: free          # 免费套餐；如需常驻可改 hobby（付费）
+    branch: main        # 你的默认分支名
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 3000
+      # 可选：填入后 AI 聊天使用真实 DeepSeek 模型，否则走本地情绪支持回退
+      - key: DEEPSEEK_API_KEY
+        sync: false      # 部署时在 Render 后台手动填写，不写入代码
+      # 可选：音乐解析源 / 作曲服务（见 .env.example）

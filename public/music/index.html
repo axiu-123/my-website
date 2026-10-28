@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>音乐解析下载 · 多功能聚合站</title>
+<link rel="stylesheet" href="/assets/style.css" />
+</head>
+<body>
+<header class="topbar" id="topbar"></header>
+<main>
+  <div class="panel">
+    <h2>🎵 音乐解析 · 转 MP3 下载</h2>
+    <p class="desc">支持 QQ音乐 与 网易云音乐 的歌曲链接/ID 解析，获取直链后一键下载为 MP3。请遵守相关平台服务条款与版权规定，仅用于个人合法用途。</p>
+
+    <label>平台</label>
+    <select id="platform">
+      <option value="netease">网易云音乐</option>
+      <option value="qq">QQ音乐</option>
+    </select>
+
+    <label>搜索歌曲（可选，自动获取 ID）</label>
+    <div class="row">
+      <input type="text" id="kw" placeholder="如：周杰伦 晴天" />
+      <button class="ghost" id="search" style="flex:0 0 auto;">搜索</button>
+    </div>
+    <div id="searchResult" style="margin-top:10px;"></div>
+
+    <label>歌曲链接或 ID</label>
+    <input type="text" id="input" placeholder="粘贴分享链接，或填写歌曲 ID" />
+
+    <button class="primary" id="parse">解析并获取下载链接</button>
+    <div class="result" id="out" style="display:none;"></div>
+    <p class="note">说明：解析依赖第三方公开解析源，可能因平台风控而失效；可在 <code>server/config.js</code> 或 <code>.env</code> 中替换为自建/合规的解析服务。下载由服务端代理音频流并命名为 .mp3，规避跨域与防盗链。</p>
+  </div>
+</main>
+<footer class="foot">多功能聚合站</footer>
+<script src="/assets/common.js"></script>
+<script src="/music/app.js"></script>
+<script>renderNav('music');</script>
+</body>
+</html>

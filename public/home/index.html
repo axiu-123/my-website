@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>多功能聚合站 · 首页</title>
+<link rel="stylesheet" href="/assets/style.css" />
+</head>
+<body>
+<header class="topbar" id="topbar"></header>
+<main>
+  <div class="hero">
+    <h1>多功能聚合站 🛠️</h1>
+    <p>一个网站，七大功能，每个功能都有独立可访问链接。翻译、音乐解析、文件整理、文件查重、AI 聊天、桌面宠宠、AI 作曲，全部集成于此。</p>
+  </div>
+
+  <div class="grid">
+    <a class="card" href="/translate/">
+      <div class="ic">🌐</div>
+      <h3>语言互译</h3>
+      <p>主流语言互译，支持自动检测与 15+ 语种。</p>
+      <div class="goto">前往 →</div>
+    </a>
+    <a class="card" href="/music/">
+      <div class="ic">🎵</div>
+      <h3>音乐解析下载</h3>
+      <p>解析 QQ音乐 / 网易云音乐，直链转 MP3 下载。</p>
+      <div class="goto">前往 →</div>
+    </a>
+    <a class="card" href="/organize/">
+      <div class="ic">🗂️</div>
+      <h3>文件整理</h3>
+      <p>按你自定义的规则自动归类、重命名本地文件。</p>
+      <div class="goto">前往 →</div>
+    </a>
+    <a class="card" href="/dedup/">
+      <div class="ic">🔍</div>
+      <h3>文件查重</h3>
+      <p>扫描目录，找出并用哈希标记重复文件。</p>
+      <div class="goto">前往 →</div>
+    </a>
+    <a class="card" href="/chat/">
+      <div class="ic">💬</div>
+      <h3>AI 聊天</h3>
+      <p>既解答问题，也提供情绪价值的心灵伙伴。</p>
+      <div class="goto">前往 →</div>
+    </a>
+    <a class="card" href="/pet/">
+      <div class="ic">🐾</div>
+      <h3>桌面宠宠</h3>
+      <p>3D Q 版桌宠，默认在线模型，支持本地上传。</p>
+      <div class="goto">前往 →</div>
+    </a>
+    <a class="card" href="/compose/">
+      <div class="ic">🎼</div>
+      <h3>AI 智能作曲</h3>
+      <p>参考 Suno 的本地生成式作曲，输入风格即出旋律。</p>
+      <div class="goto">前往 →</div>
+    </a>
+  </div>
+
+  <div class="panel" style="margin-top:30px;">
+    <h2>快速链接（独立可访问）</h2>
+    <p class="desc">以下每个地址均可直接在浏览器打开：</p>
+    <table class="tbl">
+      <thead><tr><th>功能</th><th>独立链接</th></tr></thead>
+      <tbody>
+        <tr><td>语言互译</td><td><a href="/translate/">/translate/</a></td></tr>
+        <tr><td>音乐解析</td><td><a href="/music/">/music/</a></td></tr>
+        <tr><td>文件整理</td><td><a href="/organize/">/organize/</a></td></tr>
+        <tr><td>文件查重</td><td><a href="/dedup/">/dedup/</a></td></tr>
+        <tr><td>AI 聊天</td><td><a href="/chat/">/chat/</a></td></tr>
+        <tr><td>桌面宠宠</td><td><a href="/pet/">/pet/</a></td></tr>
+        <tr><td>AI 作曲</td><td><a href="/compose/">/compose/</a></td></tr>
+      </tbody>
+    </table>
+    <p class="note">提示：音乐解析、AI 聊天等依赖外部服务的功能，可在项目根目录 <code>.env</code> 中配置 API 密钥后获得完整体验；未配置时使用内置回退方案，保证网站始终可用。</p>
+  </div>
+</main>
+<footer class="foot">多功能聚合站 · 本地可运行 · Node + Express</footer>
+<script src="/assets/common.js"></script>
+<script>renderNav('home');</script>
+</body>
+</html>

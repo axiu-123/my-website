@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>文件整理 · 多功能聚合站</title>
+<link rel="stylesheet" href="/assets/style.css" />
+</head>
+<body>
+<header class="topbar" id="topbar"></header>
+<main>
+  <div class="panel">
+    <h2>🗂️ 按规则整理文件</h2>
+    <p class="desc">选择一个本地文件夹，按你自定义的规则自动归类与重命名。整理前会先预览计划，确认后再真正移动文件（仅 Chromium 内核浏览器支持写入，如 Chrome / Edge）。</p>
+
+    <button class="primary" id="pick">选择文件夹</button>
+    <span id="dirName" class="note"></span>
+
+    <label>整理方式</label>
+    <select id="mode">
+      <option value="ext">按扩展名分类（图片/视频/文档…）</option>
+      <option value="date">按修改年月分类（YYYY-MM）</option>
+      <option value="custom">自定义规则（扩展名 → 目标文件夹）</option>
+    </select>
+
+    <div id="customRules" style="display:none; margin-top:8px;">
+      <p class="note">每行一条规则：<code>扩展名(逗号分隔) =&gt; 文件夹名</code></p>
+      <textarea id="rules" style="min-height:110px;">jpg,jpeg,png,gif,webp,heic => 图片
+mp4,mov,avi,mkv,webm => 视频
+mp3,wav,flac,m4a => 音乐
+pdf,doc,docx,xls,xlsx,ppt,pptx,txt => 文档
+zip,rar,7z => 压缩包</textarea>
+    </div>
+
+    <label><input type="checkbox" id="renamePrefix" /> 重命名时加前缀（按原名）</label>
+
+    <button class="primary" id="preview" disabled>预览整理计划</button>
+    <div id="plan" style="margin-top:14px;"></div>
+    <button class="ghost" id="apply" style="display:none;">应用整理（移动文件）</button>
+    <p class="note">安全提示：整理过程不会删除文件，只是移动到子文件夹；如不确定可先只看预览。浏览器不会上传你的任何文件，所有操作均在本地完成。</p>
+  </div>
+</main>
+<footer class="foot">多功能聚合站</footer>
+<script src="/assets/common.js"></script>
+<script src="/organize/app.js"></script>
+<script>renderNav('organize');</script>
+</body>
+</html>

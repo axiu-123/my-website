@@ -1,0 +1,5 @@
+# Caddy 反代配置（Oracle 方案可选，提供自动 HTTPS）
+# 把 your-domain.com 换成你的域名；没有域名可改成 :3000 走纯 HTTP
+your-domain.com {
+    reverse_proxy 127.0.0.1:3000
+}

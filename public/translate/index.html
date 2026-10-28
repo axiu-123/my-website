@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>语言互译 · 多功能聚合站</title>
+<link rel="stylesheet" href="/assets/style.css" />
+</head>
+<body>
+<header class="topbar" id="topbar"></header>
+<main>
+  <div class="panel">
+    <h2>🌐 语言互译</h2>
+    <p class="desc">支持主流语言互译，并可直接翻译截图 / 图片中的文字（本地 OCR 识别 + 翻译，图片不上传）。</p>
+
+    <div class="tabs" id="tabs">
+      <button class="tab active" data-tab="text">文字互译</button>
+      <button class="tab" data-tab="image">截图 / 图片翻译</button>
+    </div>
+
+    <!-- 文字互译 -->
+    <div class="tabpane" id="pane-text">
+      <div class="row">
+        <div>
+          <label>源语言</label>
+          <select id="from"></select>
+        </div>
+        <div>
+          <label>目标语言</label>
+          <select id="to"></select>
+        </div>
+      </div>
+      <label>待翻译文本</label>
+      <textarea id="src" placeholder="输入要翻译的内容……"></textarea>
+      <button class="primary" id="btn">翻译</button>
+      <button class="ghost" id="swap" style="margin-left:10px;">⇄ 交换语言</button>
+      <div class="result" id="out" style="display:none;"></div>
+      <p class="note">默认使用 MyMemory 公共翻译接口（免费、有限额），可在服务端替换为 LibreTranslate 等自建服务。</p>
+    </div>
+
+    <!-- 截图/图片翻译 -->
+    <div class="tabpane" id="pane-image" style="display:none;">
+      <div class="dropzone" id="drop">
+        <div>📷 点击选择图片，或将截图拖拽到此处</div>
+        <div class="note">提示：在别处复制截图后，直接按 <b>Ctrl/⌘ + V</b> 粘贴到本页也可</div>
+        <input type="file" id="file" accept="image/*" hidden />
+      </div>
+      <img id="preview" style="display:none; max-width:100%; margin-top:12px; border-radius:12px; border:1px solid var(--line);" />
+
+      <div class="row" style="margin-top:14px;">
+        <div>
+          <label>图片中文字语言（OCR）</label>
+          <select id="ocrLang">
+            <option value="chi_sim+eng">中文 + 英文</option>
+            <option value="eng">英文</option>
+            <option value="jpn">日文</option>
+            <option value="kor">韩文</option>
+            <option value="fra">法文</option>
+            <option value="deu">德文</option>
+            <option value="chi_sim+eng+jpn+kor">中日韩英(多)</option>
+          </select>
+        </div>
+        <div>
+          <label>翻译成</label>
+          <select id="imgTo"></select>
+        </div>
+      </div>
+
+      <button class="primary" id="ocrBtn" disabled>识别并翻译</button>
+      <div class="result" id="ocrStatus" style="display:none;"></div>
+
+      <div id="ocrResult" style="display:none; margin-top:14px;">
+        <label>识别出的文字</label>
+        <textarea id="ocrText" style="min-height:80px;"></textarea>
+        <button class="ghost" id="reTranslate" style="margin-top:8px;">重新翻译这段文字</button>
+        <label>翻译结果</label>
+        <div class="result ok" id="ocrTrans" style="white-space:pre-wrap;"></div>
+      </div>
+      <p class="note">说明：OCR 使用浏览器端 Tesseract.js，首次识别需联网下载语言包（之后会缓存），图片全程在本地处理、不会上传服务器。</p>
+    </div>
+  </div>
+</main>
+<footer class="foot">多功能聚合站</footer>
+<script src="/assets/common.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+<script src="/translate/app.js"></script>
+<script>renderNav('translate');</script>
+</body>
+</html>
