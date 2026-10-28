@@ -62,6 +62,12 @@ const config = {
     providerOrder: process.env.TRANSLATE_PROVIDER_ORDER || '',
     // DeepL API Free（可选，注册免费、无需信用卡；配置后质量与稳定性最佳）
     deeplKey: process.env.DEEPL_API_KEY || '',
+    // 百度翻译开放平台（可选，免费额度，国内账号即可申请，无需信用卡）
+    baiduAppId: process.env.BAIDU_TRANSLATE_APPID || '',
+    baiduKey: process.env.BAIDU_TRANSLATE_KEY || '',
+    // LibreTranslate（可选，自建或用公共实例）
+    libreUrl: process.env.LIBRETRANSLATE_URL || '',
+    libreKey: process.env.LIBRETRANSLATE_KEY || '',
 
     // Bing 翻译网页接口的候选域名（无需密钥，云主机上最稳）
     bingHosts: (process.env.TRANSLATE_BING_HOSTS || 'cn.bing.com,www.bing.com')

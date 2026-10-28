@@ -21,6 +21,7 @@ const config = require('../config');
 const https = require('https');
 const http = require('http');
 const zlib = require('zlib');
+const crypto = require('crypto');
 
 const UA =
   'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36';
@@ -39,7 +40,8 @@ function request(url, opts = {}, _depth = 0) {
     body = null,
     timeout = 12000,
     followRedirect = true,
-    maxRedirect = 2,
+    maxRedirect = 3,
+    cookies = '',
   } = opts;
 
   return new Promise((resolve, reject) => {
@@ -55,11 +57,14 @@ function request(url, opts = {}, _depth = 0) {
           'User-Agent': UA,
           'Accept-Language': 'zh-CN,zh;q=0.9,en;q=0.8',
           'Accept-Encoding': 'gzip, deflate',
+          ...(cookies ? { Cookie: cookies } : {}),
           ...headers,
         },
       },
       (res) => {
         const status = res.statusCode || 0;
+        // 跨重定向累积 cookie（Bing 的会话 cookie 常由 302 下发，漏掉会导致 401）
+        const nextCookies = mergeCookies(cookies, pickSetCookie(res.headers));
         if (
           followRedirect &&
           status >= 300 &&
@@ -69,7 +74,9 @@ function request(url, opts = {}, _depth = 0) {
         ) {
           res.resume();
           const next = new URL(res.headers.location, url).toString();
-          return resolve(request(next, { ...opts, method: 'GET', body: null }, _depth + 1));
+          return resolve(
+            request(next, { ...opts, method: 'GET', body: null, cookies: nextCookies }, _depth + 1)
+          );
         }
         let stream = res;
         const enc = String(res.headers['content-encoding'] || '');
@@ -79,7 +86,9 @@ function request(url, opts = {}, _depth = 0) {
         let data = '';
         stream.setEncoding('utf8');
         stream.on('data', (c) => (data += c));
-        stream.on('end', () => resolve({ status, headers: res.headers, body: data, url }));
+        stream.on('end', () =>
+          resolve({ status, headers: res.headers, body: data, url, cookies: nextCookies })
+        );
         stream.on('error', reject);
       }
     );
@@ -88,6 +97,24 @@ function request(url, opts = {}, _depth = 0) {
     if (body) req.write(body);
     req.end();
   });
+}
+
+/** 合并两段 cookie 字符串，同名以后者为准 */
+function mergeCookies(a, b) {
+  const map = new Map();
+  for (const part of String(a || '').split(';')) {
+    const kv = part.trim();
+    if (!kv) continue;
+    const i = kv.indexOf('=');
+    if (i > 0) map.set(kv.slice(0, i), kv.slice(i + 1));
+  }
+  for (const part of String(b || '').split(';')) {
+    const kv = part.trim();
+    if (!kv) continue;
+    const i = kv.indexOf('=');
+    if (i > 0) map.set(kv.slice(0, i), kv.slice(i + 1));
+  }
+  return [...map.entries()].map(([k, v]) => `${k}=${v}`).join('; ');
 }
 
 /** GET 文本，非 2xx 直接抛错 */
@@ -110,7 +137,9 @@ async function postForm(url, fields, headers = {}, timeout = 12000) {
       ...headers,
     },
   });
-  if (r.status >= 400) throw new Error('上游 HTTP ' + r.status);
+  if (r.status >= 400) {
+    throw new Error('上游 HTTP ' + r.status + ' ' + String(r.body || '').slice(0, 120));
+  }
   return r.body;
 }
 
@@ -217,7 +246,7 @@ async function refreshBingSession(force = false) {
       if (!key || !token) throw new Error('防滥用令牌解析失败');
 
       bingSession = {
-        cookie: pickSetCookie(r.headers),
+        cookie: r.cookies || pickSetCookie(r.headers),
         ig,
         key,
         token,
@@ -387,6 +416,83 @@ async function myMemoryTranslate(text, from, to) {
 }
 
 /* ------------------------------------------------------------------ *
+ * 方案 8：百度翻译开放平台（免费额度，无需信用卡，国内账号即可申请）
+ * 申请地址 https://fanyi-api.baidu.com/ ，拿到 APPID + 密钥后填入环境变量
+ * ------------------------------------------------------------------ */
+const BAIDU_LANG = {
+  'zh-CN': 'zh',
+  'zh-TW': 'cht',
+  en: 'en',
+  ja: 'jp',
+  ko: 'kor',
+  fr: 'fra',
+  de: 'de',
+  es: 'spa',
+  ru: 'ru',
+  pt: 'pt',
+  it: 'it',
+  ar: 'ara',
+  th: 'th',
+  vi: 'vie',
+  auto: 'auto',
+};
+
+async function baiduTranslate(text, from, to) {
+  const appid = config.translate.baiduAppId;
+  const key = config.translate.baiduKey;
+  if (!appid || !key) throw new Error('未配置 BAIDU_TRANSLATE_APPID/KEY');
+  const salt = String(Date.now());
+  const sign = crypto.createHash('md5').update(appid + text + salt + key).digest('hex');
+  const raw = await postForm(
+    'https://fanyi-api.baidu.com/api/trans/vip/translate',
+    {
+      q: text,
+      from: BAIDU_LANG[from] || from,
+      to: BAIDU_LANG[to] || to,
+      appid,
+      salt,
+      sign,
+    },
+    {},
+    15000
+  );
+  let data;
+  try {
+    data = JSON.parse(raw);
+  } catch (e) {
+    throw new Error('返回非 JSON');
+  }
+  if (data.error_code) throw new Error('错误码 ' + data.error_code + ' ' + (data.error_msg || ''));
+  const list = data.trans_result || [];
+  const translated = list.map((it) => it.dst).join('\n');
+  if (!translated.trim()) throw new Error('未返回译文');
+  return { translated, detected: data.from || (from === 'auto' ? 'auto' : from) };
+}
+
+/* ------------------------------------------------------------------ *
+ * 方案 9：LibreTranslate（自建或公共实例，可选）
+ * ------------------------------------------------------------------ */
+async function libreTranslate(text, from, to) {
+  const base = config.translate.libreUrl;
+  if (!base) throw new Error('未配置 LIBRETRANSLATE_URL');
+  const fields = {
+    q: text,
+    source: from === 'auto' ? 'auto' : from.split('-')[0],
+    target: to.split('-')[0],
+    format: 'text',
+  };
+  if (config.translate.libreKey) fields.api_key = config.translate.libreKey;
+  const raw = await postForm(base.replace(/\/+$/, '') + '/translate', fields, {}, 15000);
+  const data = JSON.parse(raw);
+  const translated = data && data.translatedText;
+  if (!translated) throw new Error('未返回译文');
+  return {
+    translated,
+    detected: (data.detectedLanguage && data.detectedLanguage.language) || from,
+  };
+}
+
+/* ------------------------------------------------------------------ *
  * 方案 7：大模型翻译（复用 DeepSeek 密钥，最稳、质量最好）
  * ------------------------------------------------------------------ */
 const LANG_NAMES = {
@@ -444,6 +550,8 @@ async function llmTranslate(text, from, to) {
 const PROVIDERS = {
   deepl: deeplTranslate,
   llm: llmTranslate,
+  baidu: baiduTranslate,
+  libre: libreTranslate,
   bing: bingTranslate,
   google: googleTranslate,
   google2: googleAltTranslate,
@@ -454,6 +562,8 @@ const PROVIDERS = {
 function hasKeyFor(name) {
   if (name === 'deepl') return !!config.translate.deeplKey;
   if (name === 'llm') return !!config.deepseek.apiKey;
+  if (name === 'baidu') return !!(config.translate.baiduAppId && config.translate.baiduKey);
+  if (name === 'libre') return !!config.translate.libreUrl;
   return true;
 }
 
@@ -464,7 +574,7 @@ function providerList() {
     .filter((s) => s && PROVIDERS[s]);
   const base = order.length
     ? order
-    : ['deepl', 'llm', 'bing', 'google', 'google2', 'simply', 'mymemory'];
+    : ['deepl', 'llm', 'baidu', 'libre', 'bing', 'google', 'google2', 'simply', 'mymemory'];
   // 未配置密钥的源直接跳过，避免无谓报错
   return base.filter(hasKeyFor).map((name) => [name, PROVIDERS[name]]);
 }
