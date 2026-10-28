@@ -56,11 +56,18 @@ const config = {
     apiKey: process.env.COMPOSE_API_KEY || '',
   },
 
-  // 翻译服务（默认 MyMemory 免费接口，无需密钥）
+  // 翻译服务：默认优先走 Google 免费接口（无需密钥、质量好），失败时回退 MyMemory
   translate: {
+    googleEndpoint:
+      process.env.TRANSLATE_GOOGLE_ENDPOINT ||
+      'https://translate.googleapis.com/translate_a/single',
+    // MyMemory 兜底（可选：填一个邮箱可获得更高免费额度）
     endpoint:
       process.env.TRANSLATE_ENDPOINT ||
       'https://api.mymemory.translated.net/get',
+    email: process.env.TRANSLATE_EMAIL || '',
+    // 译文缓存时长（毫秒），减少重复请求
+    cacheTtl: Number(process.env.TRANSLATE_CACHE_TTL) || 10 * 60 * 1000,
   },
 };
 
