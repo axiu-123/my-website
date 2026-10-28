@@ -49,13 +49,36 @@ DEEPSEEK_API_KEY=sk-xxxx      # 不填则 AI 聊天走本地情绪支持回退
 
 ---
 
-## 路线二：Render 免费版（最省事）
+## 路线二：Render 免费版（最省事，无需信用卡）
 
-1. 把代码推到 GitHub 仓库。
-2. Render 控制台 → New → **Blueprint**，选中仓库，会自动读取 `render.yaml`。
-3. 免费套餐选 `free`；在环境变量里填 `DEEPSEEK_API_KEY`（可选）。
-4. 部署完成后得到 `https://aggregate-site.onrender.com`，手机/任意设备直接打开。
-5. 注意：免费版会休眠，可在 `render.yaml` 把 `plan` 改为 `hobby`（付费）保持常驻；或用外部监控（如 UptimeRobot 免费）定时 ping `/api/health` 保活。
+> 前提：一个 GitHub 账号（免费，无需信用卡）。本项目已初始化为 git 仓库并切到 `main` 分支。
+
+### 步骤 A：把代码推到 GitHub
+1. 在 GitHub 网页端新建一个**空的**仓库（如 `aggregate-site`），**不要**勾选 README/.gitignore 自动生成。
+2. 在本机项目目录执行（把 URL 换成你刚建的仓库地址）：
+   ```bash
+   git remote add origin https://github.com/<你的用户名>/aggregate-site.git
+   git push -u origin main
+   ```
+   > 若本地没有 git 凭据，GitHub 会让你用 **Personal Access Token**（在 GitHub → Settings → Developer settings 生成，勾 repo 权限）代替密码登录。
+   > 嫌命令行麻烦，也可在 GitHub 网页端直接把 `aggregate-site-export.zip` 解压后拖拽上传（等价于上面的 push）。
+
+### 步骤 B：Render 一键部署
+1. 打开 https://render.com ，用 GitHub 登录。
+2. 控制台 → **New** → **Blueprint**（或 New → Web Service → 选仓库）。
+3. Render 会自动读取仓库里的 `render.yaml`，套餐选 **Free**。
+4. 点 **Deploy**。约 1–2 分钟后，得到固定地址 `https://aggregate-site.onrender.com`。
+5. （可选）想接真实 AI 聊天：在 Render 服务页 → **Environment** → 添加变量 `DEEPSEEK_API_KEY=sk-xxxx`，保存后自动重新部署；不填则走本地情绪支持回退。
+
+### 步骤 C：防止免费版休眠（保活，可选但推荐）
+免费版 15 分钟无人访问会休眠，首次打开慢几秒。用免费监控每 5 分钟 ping 一次即可常驻：
+1. 打开 https://uptimerobot.com 注册（免费）。
+2. **Add New Monitor** → Monitor Type 选 **HTTP(s)**；
+   URL 填 `https://aggregate-site.onrender.com/api/health`；
+   Monitoring Interval 选 **5 minutes**。
+3. 保存。之后服务几乎不会休眠。
+
+> 至此，手机/平板/任意网络打开 `https://aggregate-site.onrender.com/home/` 即可使用全部功能（文件整理/查重限桌面 Chrome/Edge，见上方兼容性说明）。后续加功能：push 新代码 → Render 自动重新部署。
 
 ---
 
