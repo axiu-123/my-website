@@ -1,4 +1,17 @@
 (async function () {
+  // 翻译源代号 → 展示名，避免直接把 baidu / google2 这类内部标识抛给用户
+  const SERVICE_LABEL = {
+    baidu: '百度翻译',
+    deepl: 'DeepL',
+    llm: '大模型翻译',
+    bing: 'Bing 翻译',
+    google: 'Google 翻译',
+    google2: 'Google 翻译',
+    simply: 'SimplyTranslate',
+    mymemory: 'MyMemory 公共接口',
+    libre: 'LibreTranslate',
+  };
+
   // ---------- 文字互译 ----------
   const fromSel = document.getElementById('from');
   const toSel = document.getElementById('to');
@@ -9,11 +22,16 @@
   const imgTo = document.getElementById('imgTo');
 
   let langOptions = '';
+  const langNames = {};
   try {
     const langs = await api('/api/translate/languages');
+    langs.forEach((l) => {
+      langNames[l.code] = l.name;
+    });
     langOptions = langs.map((l) => `<option value="${l.code}">${l.name}</option>`).join('');
   } catch (e) {
     langOptions = '<option value="auto">自动检测</option><option value="zh-CN">中文(简体)</option><option value="en">英语</option>';
+    Object.assign(langNames, { auto: '自动检测', 'zh-CN': '中文(简体)', en: '英语' });
   }
   fromSel.innerHTML = langOptions;
   toSel.innerHTML = langOptions;
@@ -36,7 +54,13 @@
         body: JSON.stringify({ text, from: fromSel.value, to: toSel.value }),
       });
       out.className = 'result ok';
-      out.innerHTML = `<b>译文：</b><br>${escapeHtml(r.translated)}<br><span class="note">（${r.service} · 目标语言 ${r.to}）</span>`;
+      const srcName = SERVICE_LABEL[r.service] || r.service || '未知来源';
+      const toName = langNames[r.to] || r.to;
+      const fromName = r.from && r.from !== 'auto' ? langNames[r.from] || r.from : '';
+      const meta = fromName ? `${fromName} → ${toName}` : toName;
+      out.innerHTML =
+        `<b>译文：</b><br>${escapeHtml(r.translated)}` +
+        `<br><span class="note">${escapeHtml(srcName)} · ${escapeHtml(meta)}${r.cached ? ' · 命中缓存' : ''}</span>`;
     } catch (e) {
       showTranslateError(out, e);
     } finally {
@@ -52,7 +76,7 @@
         '<b>翻译源暂时不可用</b><br>' +
         '云端服务器的共享 IP 被公共翻译接口限流了（Google / Bing / MyMemory 都会这样）。' +
         '配置任意一个<b>免费密钥</b>即可永久解决：<br>' +
-        '① <b>百度翻译开放平台</b>（免费 5 万字符/天，无需信用卡）→ 拿 APPID + 密钥<br>' +
+        '① <b>百度翻译开放平台</b>（免费 5 万字符/月，无需信用卡）→ 在「开发者信息」页拿 APPID + 密钥<br>' +
         '② Render 后台 → 你的服务 → <b>Environment</b> → 添加 ' +
         '<code>BAIDU_TRANSLATE_APPID</code>、<code>BAIDU_TRANSLATE_KEY</code> → 重新部署<br>' +
         '<span class="note">也支持 <code>DEEPL_API_KEY</code>（DeepL 免费版）或 <code>DEEPSEEK_API_KEY</code>（大模型翻译）。</span>';
