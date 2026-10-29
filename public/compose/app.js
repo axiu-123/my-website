@@ -35,6 +35,45 @@
 
   function midiToNote(m) { return Tone.Frequency(m, 'midi').toNote(); }
 
+  // 和弦级数显示（#1）：把音名数组解析成可读和弦符号，如 C / Am / F7 / G5
+  const NOTE_PC = { C:0,'C#':1,Db:1,D:2,'D#':3,Eb:3,E:4,F:5,'F#':6,Gb:6,G:7,'G#':8,Ab:8,A:9,'A#':10,Bb:10,B:11 };
+  const PITCH_NAMES = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
+  function pcOf(noteName) {
+    const m = String(noteName).match(/^([A-G][#b]?)(-?\d+)$/);
+    if (!m) return null;
+    const pc = NOTE_PC[m[1]];
+    return pc == null ? null : pc;
+  }
+  function chordLabel(notes) {
+    const pcs = notes.map(pcOf).filter((p) => p != null);
+    if (!pcs.length) return '?';
+    const root = pcs[0];
+    const has = (s) => pcs.some((p) => (((p - root) % 12) + 12) % 12 === s);
+    let q = '';
+    if (has(4) && has(7)) q = has(10) ? '7' : '';        // 大三和弦（含小七→属七）
+    else if (has(3) && has(7)) q = has(10) ? 'm7' : 'm'; // 小三和弦（含小七→小七）
+    else if (has(3)) q = 'm';
+    else if (has(4)) q = '';
+    else q = '5';                                         // 强力和弦（无三度）
+    return PITCH_NAMES[root] + q;
+  }
+  function chordProgression(events) { return events.chords.map((c) => chordLabel(c.notes)); }
+
+  // 旋律动机（#3）：生成一段相对根音的短旋律（半音偏移序列），供整首歌复用
+  function genMotif(mood, root) {
+    const scaleMidi = mood.scale.map((i) => root + i);
+    let prev = scaleMidi[Math.floor(Math.random() * 5)];
+    const len = 4 + Math.floor(Math.random() * 2); // 4~5 个音
+    const seq = [];
+    for (let i = 0; i < len; i++) {
+      const step = [-2, -1, -1, 0, 1, 1, 2][Math.floor(Math.random() * 7)];
+      const idx = Math.max(0, Math.min(scaleMidi.length - 1, scaleMidi.indexOf(prev) + step));
+      prev = scaleMidi[idx];
+      seq.push(prev - root); // 相对根音的半音偏移，天然落在音阶内
+    }
+    return seq;
+  }
+
   // ============================================================
   // 2) 乐器工厂：按音色创建 Tone.js 乐器（不再清一色电子 Synth）
   // ============================================================
@@ -223,7 +262,7 @@
   // ============================================================
   // 4) 生成引擎（旋律/和声/铺底/贝斯/鼓 + 力度 + 密度可配）
   // ============================================================
-  function genSection(mood, root, bars, bpm, dyn, drumsOn, t0, densityOverride) {
+  function genSection(mood, root, bars, bpm, dyn, drumsOn, t0, densityOverride, motif) {
     const beat = 60 / bpm;
     const barLen = beat * 4;
     const E = { melody: [], chords: [], pad: [], bass: [], drums: [] };
@@ -245,19 +284,27 @@
       E.bass.push({ t: barStart + beat * 2, dur: beat * 0.9, note: midiToNote(chordRoot - 12), vel: 0.5 * dyn + 0.18 });
 
       const sub = beat / 2;
-      let prev = scaleMidi[Math.floor(Math.random() * 5)];
       const steps = 8;
+      let prev = scaleMidi[Math.floor(Math.random() * 5)];
+      let motifPtr = 0;
       for (let i = 0; i < steps; i++) {
         if (Math.random() > density) continue;
-        const jump = Math.random() < 0.18 ? 2 : 0;
-        const step = [-2, -1, -1, 0, 1, 1, 2][Math.floor(Math.random() * 7)] + jump;
-        const idx = Math.max(0, Math.min(scaleMidi.length - 1, scaleMidi.indexOf(prev) + step));
-        prev = scaleMidi[idx];
+        let midi;
+        if (motif && motif.length) {
+          // 复用动机：每个小节把同一段旋律（相对根音的偏移）重新铺一遍，形成可辨识的钩子
+          midi = root + motif[motifPtr % motif.length]; motifPtr++;
+        } else {
+          const jump = Math.random() < 0.18 ? 2 : 0;
+          const step = [-2, -1, -1, 0, 1, 1, 2][Math.floor(Math.random() * 7)] + jump;
+          const idx = Math.max(0, Math.min(scaleMidi.length - 1, scaleMidi.indexOf(prev) + step));
+          prev = scaleMidi[idx];
+          midi = prev;
+        }
         const isDownbeat = i % 2 === 0;
         E.melody.push({
           t: barStart + i * sub,
           dur: (isDownbeat ? sub * 0.9 : sub * 0.7),
-          note: midiToNote(prev),
+          note: midiToNote(midi),
           vel: (isDownbeat ? 0.32 : 0.22) * dyn + 0.25,
         });
       }
@@ -310,7 +357,7 @@
     let t = 0;
     const E = { melody: [], chords: [], pad: [], bass: [], drums: [], total: 0 };
     for (const s of sections) {
-      const ev = genSection(s.mood, s.root, s.bars, bpm, s.dyn, s.drums, t, s.density);
+      const ev = genSection(s.mood, s.root, s.bars, bpm, s.dyn, s.drums, t, s.density, s.motif);
       E.melody.push(...ev.melody); E.chords.push(...ev.chords);
       E.pad.push(...ev.pad); E.bass.push(...ev.bass); E.drums.push(...ev.drums);
       t += ev.total;
@@ -386,9 +433,10 @@
     const s = STYLES[key];
     currentInstrSet = s.instr;
     currentBpm = bpm;
-    currentEvents = concatSections([{ mood: s, root: s.root, bars, dyn: 0.85, drums: s.drum !== 'none', density: s.density }], bpm);
+    const motif = genMotif(s, s.root); // 全曲复用同一动机，形成可辨识的钩子
+    currentEvents = concatSections([{ mood: s, root: s.root, bars, dyn: 0.85, drums: s.drum !== 'none', density: s.density, motif }], bpm);
     out.style.display = 'block'; out.className = 'result ok';
-    out.innerHTML = `🎯 AI 已为你直接生成：<b>${s.label}（${s.emotion}）</b><br>${bpm} BPM · ${bars} 小节 ｜ 乐器：${TIMBRE_LABELS[s.instr.melody]} / ${TIMBRE_LABELS[s.instr.bass]}<br>旋律 ${currentEvents.melody.length} 音 ｜ 和弦 ${currentEvents.chords.length} 段 ｜ 贝斯 ${currentEvents.bass.length} 音 ｜ 鼓点 ${currentEvents.drums.length} 个 ｜ 铺底 ${currentEvents.pad.length} 段。点击「停止」可随时结束，多次点击可换随机版本。`;
+    out.innerHTML = `🎯 AI 已为你直接生成：<b>${s.label}（${s.emotion}）</b><br>${bpm} BPM · ${bars} 小节 ｜ 乐器：${TIMBRE_LABELS[s.instr.melody]} / ${TIMBRE_LABELS[s.instr.bass]}<br>旋律 ${currentEvents.melody.length} 音 ｜ 和弦 ${currentEvents.chords.length} 段 ｜ 贝斯 ${currentEvents.bass.length} 音 ｜ 鼓点 ${currentEvents.drums.length} 个 ｜ 铺底 ${currentEvents.pad.length} 段<br>🎵 和弦进行：<b>${chordProgression(currentEvents).join(' – ')}</b> ｜ 已复用主旋律动机作为全曲钩子。`;
     await playCurrent();
   });
 
@@ -560,23 +608,24 @@
       const melodyTimbre = sel[0].mel;
       const set = { ...STYLES[advGenre].instr, melody: melodyTimbre };
       const sections = [];
+      const songMotif = genMotif(STYLES[advGenre], STYLES[advGenre].root); // 全曲共享动机，副歌借 root 升调复用
       if (sel.length >= 2) {
         const a = sel[0], b = sel[1];
-        sections.push({ mood: STYLES[advGenre], bars: 2, dyn: 0.45, drums: false, root: a.root, density: 0.4 });
-        sections.push({ mood: STYLES[advGenre], bars: a.bars, dyn: 0.8, drums: a.drums, root: a.root, density: a.density });
-        sections.push({ mood: STYLES[advGenre], bars: b.bars, dyn: 1.0, drums: b.drums, root: b.root + 2, density: b.density });
-        sections.push({ mood: STYLES[advGenre], bars: a.bars, dyn: 0.8, drums: a.drums, root: a.root, density: a.density });
-        sections.push({ mood: STYLES[advGenre], bars: b.bars, dyn: 0.85, drums: b.drums, root: b.root + 4, density: Math.max(0.3, b.density - 0.2) });
-        sections.push({ mood: STYLES[advGenre], bars: b.bars, dyn: 1.0, drums: b.drums, root: b.root + 2, density: b.density });
-        sections.push({ mood: STYLES[advGenre], bars: 2, dyn: 0.4, drums: false, root: a.root, density: 0.35 });
+        sections.push({ mood: STYLES[advGenre], bars: 2, dyn: 0.45, drums: false, root: a.root, density: 0.4, motif: songMotif });
+        sections.push({ mood: STYLES[advGenre], bars: a.bars, dyn: 0.8, drums: a.drums, root: a.root, density: a.density, motif: songMotif });
+        sections.push({ mood: STYLES[advGenre], bars: b.bars, dyn: 1.0, drums: b.drums, root: b.root + 2, density: b.density, motif: songMotif });
+        sections.push({ mood: STYLES[advGenre], bars: a.bars, dyn: 0.8, drums: a.drums, root: a.root, density: a.density, motif: songMotif });
+        sections.push({ mood: STYLES[advGenre], bars: b.bars, dyn: 0.85, drums: b.drums, root: b.root + 4, density: Math.max(0.3, b.density - 0.2), motif: songMotif });
+        sections.push({ mood: STYLES[advGenre], bars: b.bars, dyn: 1.0, drums: b.drums, root: b.root + 2, density: b.density, motif: songMotif });
+        sections.push({ mood: STYLES[advGenre], bars: 2, dyn: 0.4, drums: false, root: a.root, density: 0.35, motif: songMotif });
       } else {
         const f = sel[0];
-        sections.push({ mood: STYLES[advGenre], bars: 2, dyn: 0.45, drums: false, root: f.root, density: 0.4 });
-        sections.push({ mood: STYLES[advGenre], bars: f.bars, dyn: 0.8, drums: f.drums, root: f.root, density: f.density });
-        sections.push({ mood: STYLES[advGenre], bars: f.bars, dyn: 1.0, drums: f.drums, root: f.root + 2, density: f.density });
-        sections.push({ mood: STYLES[advGenre], bars: f.bars, dyn: 0.85, drums: f.drums, root: f.root + 4, density: Math.max(0.3, f.density - 0.2) });
-        sections.push({ mood: STYLES[advGenre], bars: f.bars, dyn: 1.0, drums: f.drums, root: f.root + 2, density: f.density });
-        sections.push({ mood: STYLES[advGenre], bars: 2, dyn: 0.4, drums: false, root: f.root, density: 0.35 });
+        sections.push({ mood: STYLES[advGenre], bars: 2, dyn: 0.45, drums: false, root: f.root, density: 0.4, motif: songMotif });
+        sections.push({ mood: STYLES[advGenre], bars: f.bars, dyn: 0.8, drums: f.drums, root: f.root, density: f.density, motif: songMotif });
+        sections.push({ mood: STYLES[advGenre], bars: f.bars, dyn: 1.0, drums: f.drums, root: f.root + 2, density: f.density, motif: songMotif });
+        sections.push({ mood: STYLES[advGenre], bars: f.bars, dyn: 0.85, drums: f.drums, root: f.root + 4, density: Math.max(0.3, f.density - 0.2), motif: songMotif });
+        sections.push({ mood: STYLES[advGenre], bars: f.bars, dyn: 1.0, drums: f.drums, root: f.root + 2, density: f.density, motif: songMotif });
+        sections.push({ mood: STYLES[advGenre], bars: 2, dyn: 0.4, drums: false, root: f.root, density: 0.35, motif: songMotif });
       }
       currentEvents = concatSections(sections, bpm);
       currentInstrSet = set;
@@ -584,7 +633,7 @@
       const res = document.getElementById('advResult');
       res.style.display = 'block'; res.className = 'result ok';
       const struct = sections.map((s, i) => `第${i + 1}段`).join(' → ');
-      res.innerHTML = `✅ AI 已完成作曲：<b>${STYLES[advGenre].label}</b> 完整歌曲<br>结构：${struct} ｜ 共 ${currentEvents.total.toFixed(1)} 秒 ｜ 旋律乐器：${TIMBRE_LABELS[melodyTimbre]}<br>旋律 ${currentEvents.melody.length} 音 ｜ 和弦 ${currentEvents.chords.length} 段 ｜ 鼓点 ${currentEvents.drums.length} 个。<div class="export-row"><button class="primary" id="advDlWav">⬇ 导出 WAV</button><button class="ghost" id="advDlMp3">⬇ 导出 MP3</button></div>`;
+      res.innerHTML = `✅ AI 已完成作曲：<b>${STYLES[advGenre].label}</b> 完整歌曲<br>结构：${struct} ｜ 共 ${currentEvents.total.toFixed(1)} 秒 ｜ 旋律乐器：${TIMBRE_LABELS[melodyTimbre]}<br>旋律 ${currentEvents.melody.length} 音 ｜ 和弦 ${currentEvents.chords.length} 段 ｜ 鼓点 ${currentEvents.drums.length} 个<br>🎵 和弦进行：<b>${chordProgression(currentEvents).join(' – ')}</b><br>🔁 已复用主歌/片段 A 的旋律动机作为副歌钩子（副歌借升调重复，形成完整歌曲感）。<div class="export-row"><button class="primary" id="advDlWav">⬇ 导出 WAV</button><button class="ghost" id="advDlMp3">⬇ 导出 MP3</button></div>`;
       document.getElementById('advDlWav').addEventListener('click', (e) => doExport('wav', e.currentTarget));
       document.getElementById('advDlMp3').addEventListener('click', (e) => doExport('mp3', e.currentTarget));
       playCurrent();
