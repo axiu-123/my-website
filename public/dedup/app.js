@@ -9,6 +9,10 @@
   const delCountEl = document.getElementById('delCount');
   const selectDupsBtn = document.getElementById('selectDups');
   const quarantineBtn = document.getElementById('quarantine');
+  const playerBar = document.getElementById('playerBar');
+  const player = document.getElementById('player');
+  const nowPlaying = document.getElementById('nowPlaying');
+  const stopPlay = document.getElementById('stopPlay');
   const modeEls = document.querySelectorAll('input[name="mode"]');
   const advOptions = document.getElementById('advOptions');
   const thresholdEl = document.getElementById('threshold');
@@ -18,6 +22,53 @@
   let dirHandle = null;
   let currentGroups = []; // [{key, members:[{name,full,size,handle,parent}], keepIndex, mode}]
   let currentMode = 'exact';
+  let currentUrl = null;
+  let playingRow = null;
+
+  const AUDIO_EXT = ['mp3', 'flac', 'm4a', 'wav', 'ogg', 'oga', 'aac', 'wma', 'opus', 'weba', 'mp4', 'mp3'];
+  function isAudio(name) {
+    const p = String(name).toLowerCase().split('.');
+    return AUDIO_EXT.includes(p[p.length - 1]);
+  }
+  function stopAudio() {
+    if (player) {
+      player.pause();
+      player.removeAttribute('src');
+      player.load();
+    }
+    if (currentUrl) {
+      URL.revokeObjectURL(currentUrl);
+      currentUrl = null;
+    }
+    if (playingRow) {
+      playingRow.classList.remove('playing');
+      playingRow = null;
+    }
+    if (playerBar) playerBar.style.display = 'none';
+  }
+  async function playFile(m, rowEl) {
+    try {
+      const file = await m.handle.getFile();
+      const t = file.type || '';
+      if (!/^audio\//.test(t) && !isAudio(m.name)) {
+        alert('该文件不是音频，无法试听。');
+        return;
+      }
+      stopAudio();
+      currentUrl = URL.createObjectURL(file);
+      player.src = currentUrl;
+      nowPlaying.textContent = '正在试听：' + m.full + '（' + fmtSize(file.size) + '）';
+      playerBar.style.display = 'flex';
+      if (rowEl) {
+        if (playingRow) playingRow.classList.remove('playing');
+        rowEl.classList.add('playing');
+        playingRow = rowEl;
+      }
+      await player.play();
+    } catch (e) {
+      alert('无法播放该文件：' + (e && e.message ? e.message : e));
+    }
+  }
 
   function escapeHtml(s) {
     return String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -71,6 +122,7 @@
 
   scanBtn.addEventListener('click', async () => {
     if (!dirHandle) return;
+    stopAudio();
     currentMode = getMode();
     scanBtn.disabled = true;
     actionsEl.style.display = 'none';
@@ -136,17 +188,25 @@
           .map((m, mi) => {
             const isKeep = mi === g.keepIndex;
             totalDup += isKeep ? 0 : 1;
+            const audio = isAudio(m.name);
+            const nameCell = audio
+              ? `<td class="playable" data-gi="${gi}" data-mi="${mi}" title="点击试听">${escapeHtml(m.full)}</td>`
+              : `<td>${escapeHtml(m.full)}</td>`;
+            const playCell = audio
+              ? `<td><button class="playbtn" data-gi="${gi}" data-mi="${mi}">▶ 试听</button></td>`
+              : '<td><span class="note">非音频</span></td>';
             return `<tr>
               <td><input type="checkbox" class="delbox" data-gi="${gi}" data-mi="${mi}" ${isKeep ? '' : ''}/></td>
-              <td>${escapeHtml(m.full)}</td>
+              ${nameCell}
               <td>${fmtSize(m.size)}</td>
               <td class="${isKeep ? 'ok-text' : 'dup'}">${isKeep ? '保留' : '可删'}</td>
+              ${playCell}
             </tr>`;
           })
           .join('');
         return `<div class="dup-group">
           <div class="dup-group-head">${head} <span class="note">（${g.members.length} 个，推荐保留 ${escapeHtml(g.members[g.keepIndex].name)}）</span></div>
-          <table class="tbl"><thead><tr><th>删?</th><th>文件</th><th>大小</th><th>状态</th></tr></thead><tbody>${rows}</tbody></table>
+          <table class="tbl"><thead><tr><th>删?</th><th>文件（点名可试听）</th><th>大小</th><th>状态</th><th>试听</th></tr></thead><tbody>${rows}</tbody></table>
         </div>`;
       })
       .join('');
@@ -167,6 +227,22 @@
     if (e.target.classList.contains('delbox')) updateDelCount();
   });
 
+  // 点击「▶ 试听」或文件名即可播放该文件，用于人工确认是否真为同一首
+  resultEl.addEventListener('click', (e) => {
+    const btn = e.target.closest('.playbtn');
+    const cell = e.target.closest('.playable');
+    if (!btn && !cell) return;
+    const el = btn || cell;
+    const gi = +el.dataset.gi, mi = +el.dataset.mi;
+    const m = currentGroups[gi] && currentGroups[gi].members[mi];
+    if (!m) return;
+    playFile(m, el.closest('tr'));
+  });
+  if (player) player.addEventListener('ended', () => {
+    if (playingRow) { playingRow.classList.remove('playing'); playingRow = null; }
+  });
+  if (stopPlay) stopPlay.addEventListener('click', stopAudio);
+
   selectDupsBtn.addEventListener('click', () => {
     document.querySelectorAll('.delbox').forEach((c) => (c.checked = true));
     updateDelCount();
@@ -176,6 +252,7 @@
   deleteBtn.addEventListener('click', async () => {
     const boxes = [...document.querySelectorAll('.delbox:checked')];
     if (!boxes.length) return;
+    stopAudio();
     const adv = currentMode === 'adv';
     const msg = adv
       ? `高级模式按"文件名相似"判定重复，可能误删真正不同的文件。\n确定要永久删除选中的 ${boxes.length} 个文件吗？\n⚠️ 此操作不可恢复！`
