@@ -9,24 +9,49 @@
   .recommend {
     background: var(--card, #fff);
     border: 1px dashed var(--accent, #ff9100);
-    border-radius: 10px;
-    padding: 10px 14px;
-    margin: 10px 0;
-    display: none;
+    border-radius: 10px; padding: 10px 14px; margin: 10px 0; display: none;
   }
-  .mode-line { margin: 12px 0; }
-  #advPanel { display: none; margin-top: 12px; border-top: 1px solid var(--line, #ddd); padding-top: 12px; }
-  .sec-row {
-    display: flex; flex-wrap: wrap; gap: 8px; align-items: center;
-    background: var(--card, #fff); border: 1px solid var(--line, #ddd);
-    border-radius: 8px; padding: 8px 10px; margin-bottom: 8px;
+  .mode-switch { display: flex; gap: 10px; margin: 14px 0; flex-wrap: wrap; }
+  .mode {
+    flex: 1; min-width: 200px; padding: 12px; border-radius: 10px; cursor: pointer;
+    border: 2px solid var(--line, #ddd); background: var(--card, #fff); color: var(--text, #222);
+    font-size: 15px; font-weight: 600; transition: .15s;
   }
-  .sec-idx { width: 22px; height: 22px; border-radius: 50%; background: var(--accent, #ff9100); color: #fff;
-    display: inline-flex; align-items: center; justify-content: center; font-size: 12px; }
-  .sec-row input[type=text], .sec-row select { padding: 4px 6px; }
-  .sec-row label { font-size: 12px; display: inline-flex; gap: 4px; align-items: center; }
-  .sec-name { width: 120px; }
-  .tpl-btns { margin: 8px 0; }
+  .mode.active { border-color: var(--accent, #ff9100); background: var(--accent, #ff9100); color: #fff; }
+  .mode small { display: block; font-weight: 400; font-size: 12px; opacity: .9; margin-top: 4px; }
+
+  /* 步骤指示器 */
+  .steps { display: flex; gap: 6px; margin: 10px 0 16px; padding: 0; list-style: none; }
+  .steps li {
+    flex: 1; text-align: center; font-size: 12px; padding: 6px 4px; border-radius: 8px;
+    background: var(--card, #fff); border: 1px solid var(--line, #ddd); color: #888;
+  }
+  .steps li.on { background: var(--accent, #ff9100); color: #fff; border-color: var(--accent, #ff9100); }
+
+  .genre-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 10px; margin: 10px 0; }
+  .genre-card {
+    display: flex; flex-direction: column; gap: 4px; padding: 12px; border-radius: 10px; cursor: pointer;
+    border: 2px solid var(--line, #ddd); background: var(--card, #fff); color: var(--text, #222); text-align: left;
+  }
+  .genre-card span { font-size: 12px; opacity: .75; }
+  .genre-card.main { border-color: var(--accent, #ff9100); }
+  .genre-card.chosen { background: var(--accent, #ff9100); color: #fff; border-color: var(--accent, #ff9100); }
+  .genre-card.chosen span { opacity: .9; }
+
+  .frag-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; margin: 10px 0; }
+  .frag-card { border: 1px solid var(--line, #ddd); border-radius: 10px; padding: 12px; background: var(--card, #fff); }
+  .frag-pick { font-size: 13px; display: inline-flex; gap: 6px; align-items: center; cursor: pointer; }
+  .frag-name { font-weight: 600; margin: 8px 0 4px; }
+
+  .edit-box { border: 1px solid var(--line, #ddd); border-radius: 10px; padding: 12px; margin: 10px 0; background: var(--card, #fff); }
+  .edit-title { font-weight: 600; margin-bottom: 8px; }
+  .edit-box label { display: flex; flex-direction: column; gap: 4px; font-size: 12px; margin-bottom: 8px; }
+  .edit-box select, .edit-box input[type=number] { padding: 4px 6px; }
+
+  .adv-nav { display: flex; gap: 10px; margin-top: 16px; }
+  .row { display: flex; gap: 16px; flex-wrap: wrap; }
+  .row > div { display: flex; flex-direction: column; gap: 4px; }
+  .row label { font-size: 13px; }
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
 </head>
@@ -35,72 +60,77 @@
 <main>
   <div class="panel">
     <h2>🎼 AI 智能作曲（参考 Suno）</h2>
-    <p class="desc">用一句话描述你想要的曲风，系统会推荐风格、情绪与合适的速度；也可切换到<b>高级模式</b>编排多段落、做情感转变与调性转换，创作更完整的作品。全部在本地浏览器生成，无需联网、无需密钥。</p>
+    <p class="desc">全部在本地浏览器端生成，无需联网、无需密钥。提供两种模式：<b>基础模式</b>由 AI 读提示词直接生成；<b>高级模式</b>由 AI 领航，陪你选类型、挑片段、做修改，最终 AI 主导完成整首歌。</p>
 
-    <label>创作提示词（自然语言，可选）</label>
-    <input type="text" id="prompt" placeholder="例如：一段悲伤但燃起来的史诗感音乐，适合游戏高潮，要完整一点" />
+    <label>创作提示词（自然语言，可选，两种模式通用）</label>
+    <input type="text" id="prompt" placeholder="例如：一段悲伤但燃起来的史诗感音乐，适合游戏高潮" />
     <div class="recommend" id="recommend"></div>
 
-    <div class="row">
-      <div>
-        <label>风格 / 情绪</label>
-        <select id="mood">
-          <option value="happy">欢快 Pop</option>
-          <option value="sad">悲伤 Ballad</option>
-          <option value="electronic">电子 / EDM</option>
-          <option value="chinese">古风 / 中国风</option>
-          <option value="lofi">Lo-Fi 放松</option>
-          <option value="epic">史诗 / 电影感</option>
-          <option value="jazz">爵士 / R&B 柔</option>
-          <option value="rock">摇滚 / 流行燃</option>
-          <option value="ambient">氛围 / 纯音乐</option>
-          <option value="rnb">R&B / 慢摇</option>
-        </select>
-      </div>
-      <div>
-        <label>速度 (BPM)</label>
-        <input type="number" id="bpm" value="110" min="60" max="180" />
-      </div>
-      <div>
-        <label>小节数</label>
-        <input type="number" id="bars" value="8" min="2" max="32" />
-      </div>
+    <div class="mode-switch">
+      <button class="mode active" id="modeBasic">🎯 基础模式<small>AI 直接生成完整音乐</small></button>
+      <button class="mode" id="modeAdv">🧭 高级模式<small>AI 领航：选类型→挑片段→改→成曲</small></button>
     </div>
 
-    <div class="mode-line">
-      <label><input type="checkbox" id="advToggle" /> 高级模式（多段落编排 · 情感转变 · 调性转换）</label>
-    </div>
-
-    <div id="advPanel">
-      <p class="note">基础调（后续段落可用「调性」相对它移调，实现升调/降调）：</p>
+    <!-- ============ 基础模式 ============ -->
+    <div id="basicPanel">
       <div class="row">
-        <div><label>根音</label>
-          <select id="baseKeyNote">
-            <option>C</option><option>C#</option><option>D</option><option>D#</option><option>E</option>
-            <option>F</option><option>F#</option><option>G</option><option>G#</option><option>A</option>
-            <option>A#</option><option>B</option>
+        <div>
+          <label>风格 / 情绪</label>
+          <select id="mood">
+            <option value="happy">流行 Pop</option>
+            <option value="sad">悲伤 Ballad</option>
+            <option value="electronic">电子 / EDM</option>
+            <option value="chinese">古风 / 中国风</option>
+            <option value="lofi">Lo-Fi 放松</option>
+            <option value="epic">史诗 / 电影感</option>
+            <option value="jazz">爵士 Jazz</option>
+            <option value="rock">摇滚 Rock</option>
+            <option value="ambient">氛围 / 纯音乐</option>
+            <option value="rnb">R&B / 慢摇</option>
+            <option value="classical">古典 Classical</option>
           </select>
         </div>
-        <div><label>八度</label>
-          <select id="baseKeyOct"><option value="3">3</option><option value="4" selected>4</option><option value="5">5</option></select>
+        <div>
+          <label>速度 (BPM)</label>
+          <input type="number" id="bpm" value="110" min="60" max="180" />
+        </div>
+        <div>
+          <label>小节数</label>
+          <input type="number" id="bars" value="8" min="2" max="32" />
         </div>
       </div>
-      <p class="note">段落模板（适合不同创作意图）：</p>
-      <div class="tpl-btns">
-        <button class="ghost" id="tplPop">流行叙事</button>
-        <button class="ghost" id="tplBallad">抒情 Ballad</button>
-        <button class="ghost" id="tplNarr">进阶叙事（含转调）</button>
-        <button class="ghost" id="addSec">＋ 添加段落</button>
+      <div style="margin-top:14px;">
+        <button class="primary" id="gen">🎲 生成并播放</button>
       </div>
-      <div id="sections"></div>
+      <div class="result" id="out" style="display:none;"></div>
+      <p class="note">说明：基础模式为 AI 直接生成式作曲（Tone.js 合成），每次点击带随机性可得不同版本。乐器已按风格分类：流行用钢琴/电钢、摇滚用失真电吉他与摇滚贝斯、爵士用萨克斯与爵士低音、古典用钢琴与弦乐等。</p>
     </div>
 
-    <button class="primary" id="gen">🎲 生成并播放</button>
-    <button class="ghost" id="stop" style="margin-left:10px;">⏹ 停止</button>
-    <button class="ghost" id="dl" style="margin-left:10px;">⬇ 导出 WAV</button>
+    <!-- ============ 高级模式 ============ -->
+    <div id="advPanel" style="display:none;">
+      <ol class="steps">
+        <li class="step-dot on">① 选类型</li>
+        <li class="step-dot">② 挑片段</li>
+        <li class="step-dot">③ 改片段</li>
+        <li class="step-dot">④ 成曲</li>
+      </ol>
 
-    <div class="result" id="out" style="display:none;"></div>
-    <p class="note">说明：本页为端侧生成式作曲（Tone.js 合成），每次生成带有随机性，可多次点击获得不同版本。导出 WAV 由浏览器本地渲染，不占用服务器。高级模式支持前奏→主歌→副歌→桥段→尾奏的结构，桥段可设不同情绪与移调，实现情感与调性的转变。</p>
+      <div id="advStep1"></div>
+      <div id="advStep2" style="display:none;"></div>
+      <div id="advStep3" style="display:none;"></div>
+      <div id="advStep4" style="display:none;"></div>
+
+      <div class="adv-nav">
+        <button class="ghost" id="advBack" style="visibility:hidden;">← 上一步</button>
+        <button class="primary" id="advNext">下一步 →</button>
+      </div>
+    </div>
+
+    <!-- 通用控制 -->
+    <div style="margin-top:18px; border-top:1px solid var(--line,#ddd); padding-top:14px;">
+      <button class="ghost" id="stop">⏹ 停止</button>
+      <button class="ghost" id="dl" style="margin-left:10px;">⬇ 导出 WAV</button>
+    </div>
   </div>
 </main>
 <footer class="foot">多功能聚合站</footer>
