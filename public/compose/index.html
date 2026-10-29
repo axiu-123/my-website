@@ -52,8 +52,13 @@
   .row { display: flex; gap: 16px; flex-wrap: wrap; }
   .row > div { display: flex; flex-direction: column; gap: 4px; }
   .row label { font-size: 13px; }
+
+  .progress-wrap { height: 8px; background: var(--line, #ddd); border-radius: 6px; overflow: hidden; margin-bottom: 12px; }
+  .progress-bar { height: 100%; width: 0%; background: var(--accent, #ff9100); transition: width .1s linear; }
+  .export-row { display: flex; gap: 10px; margin-top: 12px; flex-wrap: wrap; }
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
+<script src="/vendor/lame.min.js"></script>
 </head>
 <body>
 <header class="topbar" id="topbar"></header>
@@ -128,8 +133,12 @@
 
     <!-- 通用控制 -->
     <div style="margin-top:18px; border-top:1px solid var(--line,#ddd); padding-top:14px;">
-      <button class="ghost" id="stop">⏹ 停止</button>
-      <button class="ghost" id="dl" style="margin-left:10px;">⬇ 导出 WAV</button>
+      <div class="progress-wrap"><div class="progress-bar" id="progressBar"></div></div>
+      <div class="adv-nav">
+        <button class="ghost" id="stop">⏹ 停止</button>
+        <button class="ghost" id="dl" style="margin-left:10px;">⬇ 导出 WAV</button>
+        <button class="ghost" id="dlMp3" style="margin-left:10px;">⬇ 导出 MP3</button>
+      </div>
     </div>
   </div>
 </main>
