@@ -10,22 +10,40 @@
 <header class="topbar" id="topbar"></header>
 <main>
   <div class="panel">
-    <h2>🔍 文件查重 · 标记重复项</h2>
-    <p class="desc">选择一个文件夹，程序会对每个文件计算 SHA-256 指纹，找出内容完全相同的重复文件并标记。确认后可一键将重复项移入「重复文件」文件夹（保留每组首个原件）。</p>
+    <h2>🔍 文件查重 · 标记 / 清理重复项</h2>
+    <p class="desc">选择一个文件夹，找出重复文件。支持两种模式：<b>精确模式</b>按内容 SHA-256 指纹比对（字节完全相同才算重复）；<b>高级模式</b>按文件名相似度比对（适合"名字略有不同、其实是同一首歌"的情况，例如带/不带歌手、含 Live/Remastered/伴奏等版本词）。</p>
 
     <button class="primary" id="pick">选择文件夹</button>
     <span id="dirName" class="note"></span>
 
     <label><input type="checkbox" id="recursive" checked /> 包含子文件夹</label>
 
+    <div class="modebox">
+      <div class="mode-title">查重模式</div>
+      <label class="mode-opt"><input type="radio" name="mode" value="exact" checked /> 精确（内容完全相同）</label>
+      <label class="mode-opt"><input type="radio" name="mode" value="adv" /> 高级（同名疑似 · 按文件名相似）</label>
+      <div id="advOptions" class="adv-opts" style="display:none;">
+        <label>相似度阈值：<span id="thVal">0.82</span>
+          <input type="range" id="threshold" min="0.6" max="0.95" step="0.01" value="0.82" />
+        </label>
+        <label><input type="checkbox" id="sameExt" checked /> 仅同类型文件互比（取消可把 .mp3 与 .flac 同一首合并）</label>
+      </div>
+    </div>
+
     <button class="primary" id="scan" disabled>开始查重</button>
     <div id="result" style="margin-top:14px;"></div>
-    <button class="ghost" id="quarantine" style="display:none;">隔离重复项（移入「重复文件」文件夹）</button>
-    <p class="note">所有计算在本地浏览器完成，文件不会被上传。大文件较多时哈希计算可能稍慢，请耐心等待。</p>
+
+    <div id="actions" class="actions" style="display:none;">
+      <button class="danger" id="deleteSel">删除选中项 (<span id="delCount">0</span>)</button>
+      <button class="ghost" id="selectDups">全选重复项</button>
+      <button class="ghost" id="quarantine">隔离重复项（移入「重复文件」文件夹）</button>
+    </div>
+    <p class="note">所有计算在本地浏览器完成，文件不会被上传。删除操作会直接移除文件且不可恢复，请确认勾选无误后再执行。</p>
   </div>
 </main>
 <footer class="foot">多功能聚合站</footer>
 <script src="/assets/common.js"></script>
+<script src="/dedup/similar.js"></script>
 <script src="/dedup/app.js"></script>
 <script>renderNav('dedup');</script>
 </body>
