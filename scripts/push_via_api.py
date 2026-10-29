@@ -77,14 +77,24 @@ def get_token():
 
 
 def collect_dirty():
-    """无参数时，自动收集 git status 中所有改动/新增文件（本地操作，不走网络）。"""
+    """无参数时，自动收集 git status 中所有改动/新增文件（本地操作，不走网络）。
+    未跟踪的目录会被展开为其下所有文件，避免漏提交解码器/第三方库等目录。"""
     root = os.path.dirname(os.path.abspath(__file__)) + os.sep + ".."
     out = subprocess.run([GIT, "status", "--porcelain"], capture_output=True, text=True, cwd=root)
     files = []
     for line in out.stdout.splitlines():
         parts = line.split()
-        if len(parts) >= 2:
-            files.append(parts[-1])  # 重命名时取新路径；.gitignore 项已被忽略
+        if len(parts) < 2:
+            continue
+        rel = parts[-1]  # 重命名时取新路径；.gitignore 项已被忽略
+        abs_path = os.path.normpath(os.path.join(root, *rel.split("/")))
+        if os.path.isdir(abs_path):
+            for dirpath, _, names in os.walk(abs_path):
+                for nm in names:
+                    f = os.path.join(dirpath, nm)
+                    files.append(os.path.relpath(f, root).replace(os.sep, "/"))
+        else:
+            files.append(rel)
     return files
 
 
