@@ -8,58 +8,142 @@
   const moodSel = document.getElementById('mood');
   const bpmEl = document.getElementById('bpm');
   const barsEl = document.getElementById('bars');
-  const advToggle = document.getElementById('advToggle');
-  const advPanel = document.getElementById('advPanel');
 
   // ============================================================
-  // 1) 风格预设库（更丰富的音乐性描述）
+  // 1) 风格预设库（含「按风格分类的乐器组合」）
   // ============================================================
   const STYLES = {
-    happy:     { label: '欢快 Pop',     emotion: '开心 / 明亮', scale: [0, 2, 4, 5, 7, 9, 11], prog: [0, 4, 5, 3], root: 60, bright: true,  bpm: [108, 124], drum: 'pop',    melOsc: 'triangle', density: 0.82, desc: '大调明亮，跳跃，适合喜悦、日常' },
-    sad:       { label: '悲伤 Ballad',  emotion: '伤感 / 低落', scale: [0, 2, 3, 5, 7, 8, 10], prog: [0, 5, 8, 7], root: 57, bright: false, bpm: [60, 78],   drum: 'ballad', melOsc: 'sine',     density: 0.5,  desc: '小调忧郁，长线条，适合失恋、思念' },
-    electronic: { label: '电子 / EDM',  emotion: '兴奋 / 律动', scale: [0, 3, 5, 7, 10],       prog: [0, 0, 5, 3], root: 60, bright: true,  bpm: [124, 132], drum: 'four',   melOsc: 'sawtooth', density: 0.85, desc: '四四拍强律动，适合派对、运动' },
-    chinese:   { label: '古风 / 国风',  emotion: '婉转 / 叙事', scale: [0, 2, 4, 7, 9],         prog: [0, 4, 5, 1], root: 60, bright: true,  bpm: [78, 96],   drum: 'soft',   melOsc: 'triangle', density: 0.6,  desc: '五声音阶，留白，适合江湖、抒情' },
-    lofi:      { label: 'Lo-Fi 放松',   emotion: '松弛 / 治愈', scale: [0, 3, 5, 7, 10],        prog: [0, 5, 3, 4], root: 57, bright: false, bpm: [68, 84],   drum: 'lofi',   melOsc: 'sine',     density: 0.45, desc: '慵懒摇摆，切分，适合学习、睡前' },
-    epic:      { label: '史诗 / 电影感', emotion: '宏大 / 紧张', scale: [0, 2, 3, 5, 7, 8, 10], prog: [0, 2, 4, 5], root: 55, bright: false, bpm: [90, 110],  drum: 'epic',   melOsc: 'sawtooth', density: 0.6,  desc: '小调铺陈，推进，适合游戏、高潮' },
-    jazz:      { label: '爵士 / R&B 柔', emotion: '慵懒 / 夜色', scale: [0, 2, 3, 5, 7, 9, 10], prog: [0, 3, 1, 4], root: 58, bright: false, bpm: [80, 100],  drum: 'soft',   melOsc: 'triangle', density: 0.6,  desc: '七声音阶，切分，适合咖啡、夜晚' },
-    rock:      { label: '摇滚 / 流行燃', emotion: '热血 / 力量', scale: [0, 2, 4, 5, 7, 9, 11], prog: [0, 5, 3, 4], root: 57, bright: true,  bpm: [120, 150], drum: 'rock',   melOsc: 'square',   density: 0.85, desc: '强力和弦，驱动，适合燃、奋斗' },
-    ambient:   { label: '氛围 / 纯音乐', emotion: '空灵 / 沉思', scale: [0, 2, 5, 7, 9],         prog: [0, 2, 4, 2], root: 60, bright: true,  bpm: [60, 80],   drum: 'none',   melOsc: 'sine',     density: 0.3,  desc: '大量留白，缓慢，适合冥想、背景' },
-    rnb:       { label: 'R&B / 慢摇',   emotion: '暧昧 / 律动', scale: [0, 2, 3, 5, 7, 9, 10], prog: [0, 5, 3, 1], root: 58, bright: false, bpm: [85, 100],  drum: 'rnb',    melOsc: 'triangle', density: 0.6,  desc: '切分律动，松弛，适合夜晚、情感' },
+    happy:     { label: '流行 Pop',     emotion: '开心 / 明亮', scale: [0, 2, 4, 5, 7, 9, 11], prog: [0, 4, 5, 3], root: 60, bpm: [108, 124], drum: 'pop',    density: 0.8,  desc: '大调明亮、跳进，适合喜悦、日常、副歌', instr: { melody: 'piano', bass: 'synthBass', chord: 'epiano', pad: 'strings' } },
+    sad:       { label: '悲伤 Ballad',  emotion: '伤感 / 低落', scale: [0, 2, 3, 5, 7, 8, 10], prog: [0, 5, 8, 7], root: 57, bpm: [60, 78],   drum: 'ballad', density: 0.5,  desc: '小调忧郁、长线条，适合失恋、思念',     instr: { melody: 'piano', bass: 'fretless', chord: 'epiano', pad: 'strings' } },
+    electronic: { label: '电子 / EDM',  emotion: '兴奋 / 律动', scale: [0, 3, 5, 7, 10],       prog: [0, 0, 5, 3], root: 60, bpm: [124, 132], drum: 'four',   density: 0.85, desc: '四四拍强律动，适合派对、运动',       instr: { melody: 'lead', bass: 'synthBass', chord: 'lead', pad: 'pad' } },
+    chinese:   { label: '古风 / 国风',  emotion: '婉转 / 叙事', scale: [0, 2, 4, 7, 9],         prog: [0, 4, 5, 1], root: 60, bpm: [78, 96],   drum: 'soft',   density: 0.6,  desc: '五声音阶、留白，适合江湖、抒情',   instr: { melody: 'pluck', bass: 'fretless', chord: 'pad', pad: 'pad' } },
+    lofi:      { label: 'Lo-Fi 放松',   emotion: '松弛 / 治愈', scale: [0, 3, 5, 7, 10],        prog: [0, 5, 3, 4], root: 57, bpm: [68, 84],   drum: 'lofi',   density: 0.45, desc: '慵懒摇摆、切分，适合学习、睡前',   instr: { melody: 'epiano', bass: 'fretless', chord: 'epiano', pad: 'pad' } },
+    epic:      { label: '史诗 / 电影感', emotion: '宏大 / 紧张', scale: [0, 2, 3, 5, 7, 8, 10], prog: [0, 2, 4, 5], root: 55, bpm: [90, 110],  drum: 'epic',   density: 0.6,  desc: '小调铺陈、推进，适合游戏、高潮',   instr: { melody: 'strings', bass: 'synthBass', chord: 'organ', pad: 'strings' } },
+    jazz:      { label: '爵士 Jazz',    emotion: '慵懒 / 夜色', scale: [0, 2, 3, 5, 7, 9, 10], prog: [0, 3, 1, 4], root: 58, bpm: [80, 100],  drum: 'jazz',   density: 0.6,  desc: '七声音阶、切分、 improvisation，适合咖啡、夜晚', instr: { melody: 'sax', bass: 'upright', chord: 'epiano', pad: 'pad' } },
+    rock:      { label: '摇滚 Rock',    emotion: '热血 / 力量', scale: [0, 2, 4, 5, 7, 9, 11], prog: [0, 5, 3, 4], root: 57, bpm: [120, 150], drum: 'rock',   density: 0.85, desc: '强力和弦、失真驱动，适合燃、奋斗',   instr: { melody: 'rockGuitar', bass: 'rockBass', chord: 'rockGuitar', pad: 'pad' } },
+    ambient:   { label: '氛围 / 纯音乐', emotion: '空灵 / 沉思', scale: [0, 2, 5, 7, 9],         prog: [0, 2, 4, 2], root: 60, bpm: [60, 80],   drum: 'none',   density: 0.3,  desc: '大量留白、缓慢，适合冥想、背景',   instr: { melody: 'pad', bass: 'fretless', chord: 'pad', pad: 'pad' } },
+    rnb:       { label: 'R&B / 慢摇',   emotion: '暧昧 / 律动', scale: [0, 2, 3, 5, 7, 9, 10], prog: [0, 5, 3, 1], root: 58, bpm: [85, 100],  drum: 'rnb',    density: 0.6,  desc: '切分律动、松弛，适合夜晚、情感',   instr: { melody: 'epiano', bass: 'fretless', chord: 'epiano', pad: 'strings' } },
+    classical: { label: '古典 Classical', emotion: '典雅 / 庄重', scale: [0, 2, 4, 5, 7, 9, 11], prog: [0, 3, 4, 3], root: 60, bpm: [80, 110], drum: 'none', density: 0.55, desc: '自然大调、弦乐与钢琴交织，适合典礼、叙事', instr: { melody: 'piano', bass: 'upright', chord: 'piano', pad: 'strings' } },
+  };
+
+  // 乐器音色标签（用于编辑器下拉）
+  const TIMBRE_LABELS = {
+    piano: '钢琴 Grand Piano', epiano: '电钢 / Rhodes', rockGuitar: '电吉他（失真）', acGuitar: '木吉他',
+    sax: '萨克斯', trumpet: '小号', strings: '弦乐合奏', organ: '管风琴',
+    lead: '合成主音', pad: '铺底 Pad', pluck: '拨弦 / 古琴', bell: '钟琴',
   };
 
   function midiToNote(m) { return Tone.Frequency(m, 'midi').toNote(); }
 
   // ============================================================
-  // 2) 提示词引导：识别风格 + 情绪 + 建议 BPM + 建议小节 + 理由
+  // 2) 乐器工厂：按音色创建 Tone.js 乐器（不再清一色电子 Synth）
+  // ============================================================
+  function makeTimbre(t) {
+    switch (t) {
+      case 'piano':
+        return new Tone.PolySynth(Tone.FMSynth, { volume: -7, harmonicity: 1, modulationIndex: 1.4,
+          oscillator: { type: 'sine' }, modulation: { type: 'triangle' },
+          envelope: { attack: 0.004, decay: 1.3, sustain: 0.2, release: 1.1 } });
+      case 'epiano':
+        return new Tone.PolySynth(Tone.FMSynth, { volume: -9, harmonicity: 0.5, modulationIndex: 2.2,
+          oscillator: { type: 'sine' }, modulation: { type: 'sine' },
+          envelope: { attack: 0.006, decay: 0.8, sustain: 0.4, release: 1.0 } });
+      case 'rockGuitar':
+        return new Tone.PolySynth(Tone.FMSynth, { volume: -10, harmonicity: 0.5, modulationIndex: 1.3,
+          oscillator: { type: 'sawtooth' }, modulation: { type: 'square' },
+          envelope: { attack: 0.008, decay: 0.4, sustain: 0.35, release: 0.5 } });
+      case 'acGuitar':
+        return new Tone.PolySynth(Tone.PluckSynth, { volume: -4, attackNoise: 1, dampening: 4500, resonance: 0.85 });
+      case 'sax':
+        return new Tone.PolySynth(Tone.AMSynth, { volume: -8, harmonicity: 1,
+          oscillator: { type: 'sawtooth' }, modulation: { type: 'square' },
+          envelope: { attack: 0.04, decay: 0.2, sustain: 0.7, release: 0.4 } });
+      case 'trumpet':
+        return new Tone.PolySynth(Tone.AMSynth, { volume: -9, harmonicity: 1,
+          oscillator: { type: 'square' }, modulation: { type: 'sawtooth' },
+          envelope: { attack: 0.03, decay: 0.15, sustain: 0.7, release: 0.35 } });
+      case 'strings':
+        return new Tone.PolySynth(Tone.Synth, { volume: -12, oscillator: { type: 'triangle' },
+          envelope: { attack: 0.3, decay: 0.3, sustain: 0.8, release: 1.4 } });
+      case 'organ':
+        return new Tone.PolySynth(Tone.Synth, { volume: -12, oscillator: { type: 'fatsine', count: 3, spread: 25 },
+          envelope: { attack: 0.02, decay: 0.2, sustain: 0.7, release: 0.5 } });
+      case 'lead':
+        return new Tone.PolySynth(Tone.Synth, { volume: -10, oscillator: { type: 'sawtooth' },
+          envelope: { attack: 0.01, decay: 0.2, sustain: 0.5, release: 0.3 } });
+      case 'bell':
+        return new Tone.PolySynth(Tone.Synth, { volume: -10, oscillator: { type: 'sine' },
+          envelope: { attack: 0.002, decay: 1.0, sustain: 0.0, release: 0.8 } });
+      case 'pad':
+        return new Tone.PolySynth(Tone.Synth, { volume: -16, oscillator: { type: 'triangle' },
+          envelope: { attack: 0.5, decay: 0.4, sustain: 0.7, release: 1.4 } });
+      case 'pluck':
+      default:
+        return new Tone.PolySynth(Tone.PluckSynth, { volume: -4, attackNoise: 1, dampening: 5000, resonance: 0.9 });
+    }
+  }
+
+  function makeBass(t) {
+    const base = { volume: -8, envelope: { attack: 0.01, decay: 0.2, sustain: 0.6, release: 0.3 } };
+    switch (t) {
+      case 'fretless': return new Tone.MonoSynth({ ...base, volume: -6, oscillator: { type: 'sine' }, envelope: { attack: 0.02, decay: 0.3, sustain: 0.7, release: 0.5 } });
+      case 'upright':  return new Tone.MonoSynth({ ...base, volume: -7, oscillator: { type: 'sine' }, envelope: { attack: 0.03, decay: 0.4, sustain: 0.5, release: 0.6 } });
+      case 'rockBass': return new Tone.MonoSynth({ ...base, volume: -7, oscillator: { type: 'sawtooth' }, envelope: { attack: 0.01, decay: 0.2, sustain: 0.6, release: 0.25 } });
+      case 'synthBass':
+      default:         return new Tone.MonoSynth({ ...base, oscillator: { type: 'square' } });
+    }
+  }
+
+  // 每次创建一套乐器（含独立的混响/延迟，兼容离线渲染上下文）
+  function makeInstruments(set) {
+    const reverb = new Tone.Freeverb({ roomSize: 0.72, dampening: 3500, wet: 0.22 }).toDestination();
+    const delay = new Tone.FeedbackDelay('8n', 0.15); delay.wet.value = 0.15; delay.connect(reverb);
+    const melody = makeTimbre(set.melody);
+    const chord = makeTimbre(set.chord);
+    const pad = makeTimbre(set.pad);
+    const bass = makeBass(set.bass);
+    melody.connect(reverb); melody.connect(delay);
+    chord.connect(reverb);
+    pad.connect(reverb);
+    bass.toDestination();
+    const kick = new Tone.MembraneSynth({ volume: -6 }).toDestination();
+    const snare = new Tone.NoiseSynth({ volume: -12, noise: { type: 'white' }, envelope: { attack: 0.001, decay: 0.18 } }).toDestination();
+    const hat = new Tone.NoiseSynth({ volume: -20, noise: { type: 'white' }, envelope: { attack: 0.001, decay: 0.04 } }).toDestination();
+    return { melody, chord, pad, bass, kick, snare, hat, _fx: [reverb, delay] };
+  }
+
+  function disposeInst(inst) {
+    ['melody', 'chord', 'pad', 'bass', 'kick', 'snare', 'hat'].forEach((k) => { try { inst[k].dispose(); } catch (e) {} });
+    (inst._fx || []).forEach((f) => { try { f.dispose(); } catch (e) {} });
+  }
+
+  // ============================================================
+  // 3) 提示词引导（基础模式）：识别风格 + 情绪 + BPM + 小节
   // ============================================================
   function inferPrompt(prompt) {
     const p = (prompt || '').toLowerCase();
     const rules = [
-      { k: 'happy',     re: /欢快|开心|快乐|愉快|upbeat|happy|跑步|运动|喜庆|活泼|阳光/ },
-      { k: 'sad',       re: /悲伤|难过|哭|伤感|sad|失恋|思念|emo|孤独|emo/ },
+      { k: 'happy', re: /欢快|开心|快乐|愉快|upbeat|happy|跑步|运动|喜庆|活泼|阳光/ },
+      { k: 'sad', re: /悲伤|难过|哭|伤感|sad|失恋|思念|emo|孤独/ },
       { k: 'electronic', re: /电子|赛博|edm|电音|蹦迪|dj|派对|夜店|动感/ },
-      { k: 'chinese',   re: /古风|国风|中国|武侠|江湖|民乐|中式/ },
-      { k: 'lofi',      re: /lofi|放松|lo-fi|学习|安静|睡前|chill|发呆|佛系/ },
-      { k: 'epic',      re: /史诗|电影|宏大|游戏|战斗|cinematic|史诗感|紧张|壮阔/ },
-      { k: 'jazz',      re: /爵士|jazz|咖啡|夜色|慵懒|萨克斯/ },
-      { k: 'rock',      re: /摇滚|燃|热血|奋斗|rock|金属|电吉他/ },
-      { k: 'ambient',   re: /氛围|冥想|纯音乐|空灵|思考|background|环境/ },
-      { k: 'rnb',       re: /rnb|慢摇|暧昧|夜晚|情歌|都市/ },
+      { k: 'chinese', re: /古风|国风|中国|武侠|江湖|民乐|中式/ },
+      { k: 'lofi', re: /lofi|放松|lo-fi|学习|安静|睡前|chill|发呆|佛系/ },
+      { k: 'epic', re: /史诗|电影|宏大|游戏|战斗|cinematic|紧张|壮阔/ },
+      { k: 'jazz', re: /爵士|jazz|咖啡|夜色|慵懒|萨克斯/ },
+      { k: 'rock', re: /摇滚|燃|热血|奋斗|rock|金属|电吉他/ },
+      { k: 'ambient', re: /氛围|冥想|纯音乐|空灵|思考|background|环境/ },
+      { k: 'rnb', re: /rnb|慢摇|暧昧|夜晚|情歌|都市/ },
+      { k: 'classical', re: /古典|classical|钢琴曲|奏鸣|交响|典雅|庄重|巴赫|莫扎特/ },
     ];
     let key = null, matched = [];
     for (const r of rules) if (r.re.test(p)) { key = r.k; matched.push(STYLES[r.k].label); break; }
 
-    // 速度倾向
     let bpmHint = null;
     if (/快|激烈|燃|高能|动感|蹦/.test(p)) bpmHint = 'fast';
     if (/慢|安静|舒缓|睡前|轻柔|放松/.test(p)) bpmHint = 'slow';
-
-    // 完整度倾向（完整歌曲 → 更多小节）
     const wantFull = /完整|一首歌|整首|长篇|叙事|故事|歌/.test(p);
 
-    if (!key) {
-      return { ok: false, reason: '未从提示词识别出明确风格，请在下方手动选择，或补充风格/情绪关键词。' };
-    }
+    if (!key) return { ok: false, reason: '未从提示词识别出明确风格，请在下方手动选择，或补充风格/情绪关键词。' };
     const s = STYLES[key];
     let bpm = Math.round((s.bpm[0] + s.bpm[1]) / 2);
     if (bpmHint === 'fast') bpm = s.bpm[1];
@@ -68,16 +152,13 @@
     const bars = wantFull ? 16 : 8;
     let reason = `识别到关键词「${matched.join('、')}」，匹配风格「${s.label}」（情绪：${s.emotion}）。${s.desc}。`;
     reason += bpmHint === 'fast' ? '你提到偏快/高能，已取该风格上限速度。' : bpmHint === 'slow' ? '你提到偏慢/舒缓，已取该风格下限速度。' : '';
-    reason += wantFull ? '你似乎想要完整作品，已建议 16 小节（可切换到高级模式编排段落）。' : '已建议 8 小节起步，想做完整歌曲请用高级模式。';
+    reason += wantFull ? '你似乎想要完整作品，已建议 16 小节（可切到高级模式做完整编曲）。' : '已建议 8 小节起步，想做完整歌曲请用高级模式。';
     return { ok: true, style: key, bpm, bars, reason };
   }
 
   function showRecommend() {
     const r = inferPrompt(promptEl.value);
-    if (!r.ok) {
-      recommendEl.style.display = 'none';
-      return;
-    }
+    if (!r.ok) { recommendEl.style.display = 'none'; return; }
     recommendEl.style.display = 'block';
     recommendEl.innerHTML =
       `<b>🎯 智能推荐</b><br>` +
@@ -85,46 +166,39 @@
       `建议速度：<b>${r.bpm} BPM</b> ｜ 建议小节：<b>${r.bars}</b><br>` +
       `<span class="note">${r.reason}</span><br>` +
       `<span class="note">点击「生成并播放」将采用以下推荐；你也可手动改下方选项。</span>`;
-    // 实时把推荐回填到控件
-    moodSel.value = r.style;
-    bpmEl.value = r.bpm;
-    barsEl.value = r.bars;
+    moodSel.value = r.style; bpmEl.value = r.bpm; barsEl.value = r.bars;
   }
   promptEl.addEventListener('input', showRecommend);
 
   // ============================================================
-  // 3) 生成引擎（旋律/和声/铺底/贝斯/鼓 + 力度）
+  // 4) 生成引擎（旋律/和声/铺底/贝斯/鼓 + 力度 + 密度可配）
   // ============================================================
-  function genSection(mood, root, bars, bpm, dyn, drumsOn, t0) {
+  function genSection(mood, root, bars, bpm, dyn, drumsOn, t0, densityOverride) {
     const beat = 60 / bpm;
     const barLen = beat * 4;
     const E = { melody: [], chords: [], pad: [], bass: [], drums: [] };
-    const scaleMidi = mood.scale
-      .map((i) => root + i)
-      .concat(mood.scale.map((i) => root + 12 + i));
+    const density = densityOverride != null ? densityOverride : mood.density;
+    const scaleMidi = mood.scale.map((i) => root + i).concat(mood.scale.map((i) => root + 12 + i));
 
     for (let b = 0; b < bars; b++) {
       const barStart = t0 + b * barLen;
       const deg = mood.prog[b % mood.prog.length];
       const chordRoot = root + mood.scale[deg % mood.scale.length] + (deg >= mood.scale.length ? 12 : 0);
-      const third = chordRoot + (mood.bright ? 4 : 3);
+      const hasMajorThird = mood.scale.some((d) => d % 12 === 4);
+      const third = chordRoot + (hasMajorThird ? 4 : 3);
       const fifth = chordRoot + 7;
       const chordNotes = [chordRoot, third, fifth];
 
-      // 和声（每小节）
       E.chords.push({ t: barStart, dur: barLen * 0.96, notes: chordNotes.map(midiToNote), vel: 0.45 * dyn + 0.18 });
-      // 铺底 pad（更厚）
       E.pad.push({ t: barStart, dur: barLen, notes: chordNotes.map(midiToNote), vel: 0.16 * dyn });
-      // 贝斯（跟随和弦根音，低八度）
       E.bass.push({ t: barStart, dur: beat * 0.9, note: midiToNote(chordRoot - 12), vel: 0.6 * dyn + 0.2 });
       E.bass.push({ t: barStart + beat * 2, dur: beat * 0.9, note: midiToNote(chordRoot - 12), vel: 0.5 * dyn + 0.18 });
 
-      // 旋律（密度随风格；随机游走 + 偶尔跳进）
-      const sub = beat / 2; // 八分音符
+      const sub = beat / 2;
       let prev = scaleMidi[Math.floor(Math.random() * 5)];
       const steps = 8;
       for (let i = 0; i < steps; i++) {
-        if (Math.random() > mood.density) continue; // 留白
+        if (Math.random() > density) continue;
         const jump = Math.random() < 0.18 ? 2 : 0;
         const step = [-2, -1, -1, 0, 1, 1, 2][Math.floor(Math.random() * 7)] + jump;
         const idx = Math.max(0, Math.min(scaleMidi.length - 1, scaleMidi.indexOf(prev) + step));
@@ -137,11 +211,7 @@
           vel: (isDownbeat ? 0.32 : 0.22) * dyn + 0.25,
         });
       }
-
-      // 鼓
-      if (drumsOn && mood.drum !== 'none') {
-        drumInto(E.drums, mood.drum, barStart, beat, 0.5 * dyn + 0.4, b);
-      }
+      if (drumsOn && mood.drum !== 'none') drumInto(E.drums, mood.drum, barStart, beat, 0.5 * dyn + 0.4, b);
     }
     E.total = bars * barLen;
     return E;
@@ -154,39 +224,35 @@
     switch (type) {
       case 'pop':
         kick(s, vel); kick(s + 2 * beat, vel); snare(s + beat, vel); snare(s + 3 * beat, vel);
-        for (let i = 0; i < 8; i++) hat(s + i * beat / 2, vel * 0.5);
-        break;
+        for (let i = 0; i < 8; i++) hat(s + i * beat / 2, vel * 0.5); break;
       case 'four':
         for (let i = 0; i < 4; i++) kick(s + i * beat, vel);
-        for (let i = 0; i < 8; i++) hat(s + i * beat / 2, vel * 0.45);
-        break;
+        for (let i = 0; i < 8; i++) hat(s + i * beat / 2, vel * 0.45); break;
       case 'ballad':
         kick(s, vel * 0.9); snare(s + 2 * beat, vel * 0.85);
-        for (let i = 0; i < 4; i++) hat(s + i * beat, vel * 0.35);
-        break;
+        for (let i = 0; i < 4; i++) hat(s + i * beat, vel * 0.35); break;
       case 'lofi':
         kick(s, vel * 0.9); snare(s + 2 * beat, vel * 0.8);
-        for (let i = 0; i < 8; i++) hat(s + i * beat / 2 + (i % 2 ? beat / 4 : 0), vel * 0.4);
-        break;
+        for (let i = 0; i < 8; i++) hat(s + i * beat / 2 + (i % 2 ? beat / 4 : 0), vel * 0.4); break;
       case 'rock':
         kick(s, vel); kick(s + 2 * beat, vel); kick(s + 3 * beat, vel * 0.8);
         snare(s + beat, vel); snare(s + 3 * beat, vel);
-        for (let i = 0; i < 8; i++) hat(s + i * beat / 2, vel * 0.5);
-        break;
+        for (let i = 0; i < 8; i++) hat(s + i * beat / 2, vel * 0.5); break;
       case 'epic':
         kick(s, vel); kick(s + 2 * beat, vel);
         snare(s + beat, vel); snare(s + 3 * beat, vel);
-        for (let i = 0; i < 16; i++) hat(s + i * beat / 4, vel * 0.35);
-        break;
+        for (let i = 0; i < 16; i++) hat(s + i * beat / 4, vel * 0.35); break;
       case 'rnb':
         kick(s, vel); kick(s + 2.5 * beat, vel * 0.85);
         snare(s + beat, vel);
-        for (let i = 0; i < 8; i++) hat(s + i * beat / 2 + (i % 2 ? beat / 3 : 0), vel * 0.4);
-        break;
+        for (let i = 0; i < 8; i++) hat(s + i * beat / 2 + (i % 2 ? beat / 3 : 0), vel * 0.4); break;
+      case 'jazz':
+        kick(s, vel * 0.7); kick(s + 2 * beat, vel * 0.7);
+        snare(s + beat, vel * 0.5); snare(s + 3 * beat, vel * 0.5);
+        for (let i = 0; i < 8; i++) hat(s + i * beat / 2, vel * 0.35); break;
       case 'soft':
       default:
-        for (let i = 0; i < 4; i++) hat(s + i * beat, vel * 0.3);
-        break;
+        for (let i = 0; i < 4; i++) hat(s + i * beat, vel * 0.3); break;
     }
   }
 
@@ -194,52 +260,13 @@
     let t = 0;
     const E = { melody: [], chords: [], pad: [], bass: [], drums: [], total: 0 };
     for (const s of sections) {
-      const ev = genSection(s.mood, s.root, s.bars, bpm, s.dyn, s.drums, t);
+      const ev = genSection(s.mood, s.root, s.bars, bpm, s.dyn, s.drums, t, s.density);
       E.melody.push(...ev.melody); E.chords.push(...ev.chords);
       E.pad.push(...ev.pad); E.bass.push(...ev.bass); E.drums.push(...ev.drums);
       t += ev.total;
     }
     E.total = t;
     return E;
-  }
-
-  // ============================================================
-  // 4) 播放 / 导出
-  // ============================================================
-  let live = null;
-  let currentEvents = null;
-  let currentBpm = 110;
-
-  function makeInstruments(bright) {
-    const fx = new Tone.FeedbackDelay('8n', 0.18);
-    fx.wet.value = 0.22; fx.toDestination();
-    const melody = new Tone.PolySynth(Tone.Synth, {
-      volume: -6, oscillator: { type: bright ? 'triangle' : 'sine' },
-      envelope: { attack: 0.02, decay: 0.2, sustain: 0.4, release: 0.6 },
-    });
-    melody.connect(fx); melody.toDestination();
-    const chord = new Tone.PolySynth(Tone.Synth, {
-      volume: -16, oscillator: { type: 'sine' },
-      envelope: { attack: 0.04, decay: 0.3, sustain: 0.5, release: 0.8 },
-    });
-    chord.connect(fx); chord.toDestination();
-    const pad = new Tone.PolySynth(Tone.Synth, {
-      volume: -22, oscillator: { type: 'sine' },
-      envelope: { attack: 0.4, decay: 0.4, sustain: 0.7, release: 1.4 },
-    });
-    pad.toDestination();
-    const bass = new Tone.MonoSynth({
-      volume: -10, oscillator: { type: 'triangle' },
-      envelope: { attack: 0.02, decay: 0.2, sustain: 0.6, release: 0.4 },
-    }).toDestination();
-    const kick = new Tone.MembraneSynth({ volume: -6 }).toDestination();
-    const snare = new Tone.NoiseSynth({
-      volume: -12, noise: { type: 'white' }, envelope: { attack: 0.001, decay: 0.18 },
-    }).toDestination();
-    const hat = new Tone.NoiseSynth({
-      volume: -20, noise: { type: 'white' }, envelope: { attack: 0.001, decay: 0.04 },
-    }).toDestination();
-    return { melody, chord, pad, bass, kick, snare, hat };
   }
 
   function scheduleOn(inst, ev) {
@@ -254,29 +281,253 @@
     }, d.t));
   }
 
-  async function play() {
+  async function startPlayback(events, set, bpm) {
     await Tone.start();
-    stopLive();
-    const bright = currentParams.bright;
-    const inst = makeInstruments(bright);
-    Tone.Transport.bpm.value = currentBpm;
+    const inst = makeInstruments(set);
+    Tone.Transport.bpm.value = bpm;
     Tone.Transport.cancel();
-    scheduleOn(inst, currentEvents);
+    scheduleOn(inst, events);
     Tone.Transport.start();
-    const timeout = setTimeout(() => stopLive(), currentEvents.total * 1000 + 400);
-    live = {
-      stop() {
-        try { Tone.Transport.stop(); Tone.Transport.cancel(); } catch (e) {}
-        [inst.melody, inst.chord, inst.pad, inst.bass, inst.kick, inst.snare, inst.hat].forEach((s) => { try { s.dispose(); } catch (e) {} });
-      },
-      timeout,
+    let stopped = false;
+    const stop = () => { if (stopped) return; stopped = true; try { Tone.Transport.stop(); Tone.Transport.cancel(); } catch (e) {} disposeInst(inst); };
+    const to = setTimeout(stop, events.total * 1000 + 500);
+    return { stop: () => { clearTimeout(to); stop(); } };
+  }
+
+  // ============================================================
+  // 5) 基础模式：AI 直接生成
+  // ============================================================
+  let currentEvents = null, currentInstrSet = null, currentBpm = 110, live = null;
+
+  async function playCurrent() {
+    stopLive();
+    live = await startPlayback(currentEvents, currentInstrSet, currentBpm);
+  }
+  function stopLive() { if (live) { live.stop(); live = null; } }
+
+  genBtn.addEventListener('click', async () => {
+    showRecommend();
+    const inferred = inferPrompt(promptEl.value);
+    const key = inferred.ok ? inferred.style : moodSel.value;
+    const bpm = parseInt(bpmEl.value) || 110;
+    const bars = parseInt(barsEl.value) || 8;
+    const s = STYLES[key];
+    currentInstrSet = s.instr;
+    currentBpm = bpm;
+    currentEvents = concatSections([{ mood: s, root: s.root, bars, dyn: 0.85, drums: s.drum !== 'none', density: s.density }], bpm);
+    out.style.display = 'block'; out.className = 'result ok';
+    out.innerHTML = `🎯 AI 已为你直接生成：<b>${s.label}（${s.emotion}）</b><br>${bpm} BPM · ${bars} 小节 ｜ 乐器：${TIMBRE_LABELS[s.instr.melody]} / ${TIMBRE_LABELS[s.instr.bass]}<br>旋律 ${currentEvents.melody.length} 音 ｜ 和弦 ${currentEvents.chords.length} 段 ｜ 贝斯 ${currentEvents.bass.length} 音 ｜ 鼓点 ${currentEvents.drums.length} 个 ｜ 铺底 ${currentEvents.pad.length} 段。点击「停止」可随时结束，多次点击可换随机版本。`;
+    await playCurrent();
+  });
+
+  // ============================================================
+  // 6) 高级模式：AI 领航四步工作流
+  // ============================================================
+  const modeBasic = document.getElementById('modeBasic');
+  const modeAdv = document.getElementById('modeAdv');
+  const basicPanel = document.getElementById('basicPanel');
+  const advPanel = document.getElementById('advPanel');
+  const advStep1 = document.getElementById('advStep1');
+  const advStep2 = document.getElementById('advStep2');
+  const advStep3 = document.getElementById('advStep3');
+  const advStep4 = document.getElementById('advStep4');
+  const advBack = document.getElementById('advBack');
+  const advNext = document.getElementById('advNext');
+  const stepDots = Array.from(document.querySelectorAll('.step-dot'));
+
+  const GENRE_ORDER = ['happy', 'rock', 'jazz', 'classical', 'electronic', 'chinese', 'ambient', 'rnb', 'epic', 'lofi'];
+  const MAIN_GENRES = ['happy', 'rock', 'jazz', 'classical'];
+
+  let advGenre = null;
+  let advFragments = [];      // [{id,label,spec,events,bpm,set}]
+  let advSelected = new Set();
+  let advStep = 1;
+  let preview = null;
+
+  function setMode(adv) {
+    modeBasic.classList.toggle('active', !adv);
+    modeAdv.classList.toggle('active', adv);
+    basicPanel.style.display = adv ? 'none' : 'block';
+    advPanel.style.display = adv ? 'block' : 'none';
+    if (adv) { stopLive(); renderStep1(); showAdvStep(1); }
+    else { stopPreview(); }
+  }
+  modeBasic.addEventListener('click', () => setMode(false));
+  modeAdv.addEventListener('click', () => setMode(true));
+
+  function showAdvStep(n) {
+    advStep = n;
+    stepDots.forEach((d, i) => d.classList.toggle('on', i + 1 <= n));
+    [advStep1, advStep2, advStep3, advStep4].forEach((el, i) => el.style.display = (i + 1 === n) ? 'block' : 'none');
+    advBack.style.visibility = n > 1 ? 'visible' : 'hidden';
+    advNext.style.display = n < 4 ? 'inline-block' : 'none';
+    if (n === 2) renderStep2();
+    if (n === 3) renderStep3();
+    if (n === 4) renderStep4();
+  }
+
+  function genVariantBpm() { return Math.round((STYLES[advGenre].bpm[0] + STYLES[advGenre].bpm[1]) / 2); }
+
+  function renderStep1() {
+    advStep1.innerHTML = '<p class="note">第 1 步 · 选择你想创作的音乐类型，AI 将据此推荐并生成片段。也可让 AI 根据你的提示词自动推荐。</p>';
+    const grid = document.createElement('div'); grid.className = 'genre-grid';
+    GENRE_ORDER.forEach((k) => {
+      const s = STYLES[k];
+      const card = document.createElement('button');
+      card.className = 'genre-card' + (MAIN_GENRES.includes(k) ? ' main' : '');
+      card.innerHTML = `<b>${s.label}</b><span>${s.emotion}</span>`;
+      card.addEventListener('click', () => { advGenre = k; advFragments = []; advSelected = new Set(); grid.querySelectorAll('.genre-card').forEach((c) => c.classList.remove('chosen')); card.classList.add('chosen'); advNext.disabled = false; });
+      grid.appendChild(card);
+    });
+    advStep1.appendChild(grid);
+    const rec = document.createElement('button');
+    rec.className = 'ghost'; rec.id = 'advRec';
+    rec.textContent = '🎯 让 AI 按提示词推荐类型';
+    rec.addEventListener('click', () => {
+      const r = inferPrompt(promptEl.value);
+      if (!r.ok) { alert('提示词未识别出风格，请直接点选上方类型。'); return; }
+      advGenre = r.style; advFragments = []; advSelected = new Set();
+      grid.querySelectorAll('.genre-card').forEach((c, i) => { if (GENRE_ORDER[i] === r.style) c.classList.add('chosen'); });
+      advNext.disabled = false;
+    });
+    advStep1.appendChild(rec);
+    advNext.disabled = true;
+  }
+
+  function generateFragments() {
+    const g = advGenre, base = STYLES[g].root, bpm = genVariantBpm(), mel = STYLES[g].instr.melody;
+    const variants = [
+      { label: '动机 A · 主旋律', density: STYLES[g].density, drums: STYLES[g].drum !== 'none', trans: 0 },
+      { label: '动机 B · 抒情', density: Math.max(0.3, STYLES[g].density - 0.3), drums: false, trans: 0 },
+      { label: '动机 C · 律动', density: Math.min(0.95, STYLES[g].density + 0.1), drums: STYLES[g].drum !== 'none', trans: 2 },
+    ];
+    advFragments = variants.map((v, i) => {
+      const spec = { style: g, root: base + v.trans, bars: 4, density: v.density, drums: v.drums, trans: v.trans, mel };
+      return { id: i, label: v.label, spec, events: genSection(STYLES[g], spec.root, spec.bars, bpm, 0.85, spec.drums, 0, spec.density), bpm, set: STYLES[g].instr };
+    });
+    advSelected = new Set([0]);
+  }
+
+  function renderStep2() {
+    if (!advFragments.length) generateFragments();
+    stopPreview();
+    advStep2.innerHTML = `<p class="note">第 2 步 · AI 基于「${STYLES[advGenre].label}」生成了 ${advFragments.length} 段不同音乐片段，试听后勾选你喜欢的（可多选），再下一步修改。</p>`;
+    const wrap = document.createElement('div'); wrap.className = 'frag-grid';
+    advFragments.forEach((f) => {
+      const card = document.createElement('div'); card.className = 'frag-card';
+      card.innerHTML = `<label class="frag-pick"><input type="checkbox" data-id="${f.id}" ${advSelected.has(f.id) ? 'checked' : ''}/> 选用</label>` +
+        `<div class="frag-name">${f.label}</div>` +
+        `<div class="note">${f.bpm} BPM · 4 小节 · ${f.spec.drums ? '含鼓' : '无鼓'}</div>` +
+        `<button class="ghost frag-play" data-id="${f.id}">▶ 试听</button>`;
+      wrap.appendChild(card);
+    });
+    advStep2.appendChild(wrap);
+    const regen = document.createElement('button'); regen.className = 'ghost'; regen.textContent = '🔄 重新生成一批片段';
+    regen.addEventListener('click', () => { advFragments = []; advSelected = new Set(); renderStep2(); });
+    advStep2.appendChild(regen);
+
+    wrap.querySelectorAll('.frag-play').forEach((btn) => btn.addEventListener('click', () => {
+      const f = advFragments[+btn.dataset.id];
+      stopPreview(); preview = startPlayback(f.events, f.set, f.bpm);
+    }));
+    wrap.querySelectorAll('.frag-pick input').forEach((cb) => cb.addEventListener('change', () => {
+      if (cb.checked) advSelected.add(+cb.dataset.id); else advSelected.delete(+cb.dataset.id);
+    }));
+  }
+
+  function transposeLabel(t) { return t === 0 ? '原调' : (t > 0 ? `升 ${t} 半音` : `降 ${-t} 半音`); }
+  function timbreOptions(sel) {
+    return Object.keys(TIMBRE_LABELS).map((k) => `<option value="${k}" ${k === sel ? 'selected' : ''}>${TIMBRE_LABELS[k]}</option>`).join('');
+  }
+
+  function renderStep3() {
+    const ids = Array.from(advSelected);
+    if (!ids.length) { advStep3.innerHTML = '<p class="note">请先返回上一步至少勾选一段片段。</p>'; return; }
+    stopPreview();
+    advStep3.innerHTML = '<p class="note">第 3 步 · 对所选片段做局部修改（乐器 / 移调 / 密度 / 小节 / 鼓），改完可即时试听。</p>';
+    ids.forEach((id) => {
+      const f = advFragments[id];
+      const box = document.createElement('div'); box.className = 'edit-box';
+      box.innerHTML =
+        `<div class="edit-title">${f.label}</div>` +
+        `<label>旋律乐器<select class="e-mel" data-id="${id}">${timbreOptions(f.spec.mel)}</select></label>` +
+        `<label>移调<select class="e-trans" data-id="${id}">${[-5,-4,-3,-2,-1,0,1,2,3,4,5].map((t)=>`<option value="${t}" ${t===f.spec.trans?'selected':''}>${transposeLabel(t)}</option>`).join('')}</select></label>` +
+        `<label>密度<input type="range" class="e-den" data-id="${id}" value="${f.spec.density}" min="0.3" max="0.95" step="0.05"/></label>` +
+        `<label>小节<input type="number" class="e-bars" data-id="${id}" value="${f.spec.bars}" min="2" max="16"/></label>` +
+        `<label>鼓<input type="checkbox" class="e-drums" data-id="${id}" ${f.spec.drums ? 'checked' : ''}/></label>` +
+        `<button class="ghost e-play" data-id="${id}">▶ 试听修改后</button>`;
+      advStep3.appendChild(box);
+    });
+
+    const apply = (id) => {
+      const f = advFragments[id];
+      const mel = advStep3.querySelector(`.e-mel[data-id="${id}"]`).value;
+      const trans = parseInt(advStep3.querySelector(`.e-trans[data-id="${id}"]`).value, 10);
+      const density = parseFloat(advStep3.querySelector(`.e-den[data-id="${id}"]`).value);
+      const bars = Math.max(2, parseInt(advStep3.querySelector(`.e-bars[data-id="${id}"]`).value) || 4);
+      const drums = advStep3.querySelector(`.e-drums[data-id="${id}"]`).checked;
+      f.spec = { style: advGenre, root: STYLES[advGenre].root + trans, bars, density, drums, trans, mel };
+      f.events = genSection(STYLES[advGenre], f.spec.root, f.spec.bars, f.bpm, 0.85, f.spec.drums, 0, f.spec.density);
+      f.set = { ...STYLES[advGenre].instr, melody: mel };
     };
+    advStep3.querySelectorAll('.e-mel,.e-trans,.e-den,.e-bars,.e-drums').forEach((el) => el.addEventListener('change', () => apply(+el.dataset.id)));
+    advStep3.querySelectorAll('.e-play').forEach((btn) => btn.addEventListener('click', () => {
+      apply(+btn.dataset.id); const f = advFragments[+btn.dataset.id];
+      stopPreview(); preview = startPlayback(f.events, f.set, f.bpm);
+    }));
   }
 
-  function stopLive() {
-    if (live) { clearTimeout(live.timeout); live.stop(); live = null; }
+  function renderStep4() {
+    const ids = Array.from(advSelected);
+    advStep4.innerHTML = '<p class="note">第 4 步 · AI 将把你选用的片段编排成完整歌曲（前奏→主歌→副歌→桥段→尾奏），并实现情感与调性转变，由 AI 主导完成作曲。</p>' +
+      `<button class="primary" id="advCompose">🎼 AI 完成作曲并播放</button><div id="advResult" class="result" style="display:none"></div>`;
+    document.getElementById('advCompose').addEventListener('click', () => {
+      stopLive(); stopPreview();
+      const sel = ids.map((i) => advFragments[i].spec);
+      const bpm = genVariantBpm();
+      const melodyTimbre = sel[0].mel;
+      const set = { ...STYLES[advGenre].instr, melody: melodyTimbre };
+      const sections = [];
+      if (sel.length >= 2) {
+        const a = sel[0], b = sel[1];
+        sections.push({ mood: STYLES[advGenre], bars: 2, dyn: 0.45, drums: false, root: a.root, density: 0.4 });
+        sections.push({ mood: STYLES[advGenre], bars: a.bars, dyn: 0.8, drums: a.drums, root: a.root, density: a.density });
+        sections.push({ mood: STYLES[advGenre], bars: b.bars, dyn: 1.0, drums: b.drums, root: b.root + 2, density: b.density });
+        sections.push({ mood: STYLES[advGenre], bars: a.bars, dyn: 0.8, drums: a.drums, root: a.root, density: a.density });
+        sections.push({ mood: STYLES[advGenre], bars: b.bars, dyn: 0.85, drums: b.drums, root: b.root + 4, density: Math.max(0.3, b.density - 0.2) });
+        sections.push({ mood: STYLES[advGenre], bars: b.bars, dyn: 1.0, drums: b.drums, root: b.root + 2, density: b.density });
+        sections.push({ mood: STYLES[advGenre], bars: 2, dyn: 0.4, drums: false, root: a.root, density: 0.35 });
+      } else {
+        const f = sel[0];
+        sections.push({ mood: STYLES[advGenre], bars: 2, dyn: 0.45, drums: false, root: f.root, density: 0.4 });
+        sections.push({ mood: STYLES[advGenre], bars: f.bars, dyn: 0.8, drums: f.drums, root: f.root, density: f.density });
+        sections.push({ mood: STYLES[advGenre], bars: f.bars, dyn: 1.0, drums: f.drums, root: f.root + 2, density: f.density });
+        sections.push({ mood: STYLES[advGenre], bars: f.bars, dyn: 0.85, drums: f.drums, root: f.root + 4, density: Math.max(0.3, f.density - 0.2) });
+        sections.push({ mood: STYLES[advGenre], bars: f.bars, dyn: 1.0, drums: f.drums, root: f.root + 2, density: f.density });
+        sections.push({ mood: STYLES[advGenre], bars: 2, dyn: 0.4, drums: false, root: f.root, density: 0.35 });
+      }
+      currentEvents = concatSections(sections, bpm);
+      currentInstrSet = set;
+      currentBpm = bpm;
+      const res = document.getElementById('advResult');
+      res.style.display = 'block'; res.className = 'result ok';
+      const struct = sections.map((s, i) => `第${i + 1}段`).join(' → ');
+      res.innerHTML = `✅ AI 已完成作曲：<b>${STYLES[advGenre].label}</b> 完整歌曲<br>结构：${struct} ｜ 共 ${currentEvents.total.toFixed(1)} 秒 ｜ 旋律乐器：${TIMBRE_LABELS[melodyTimbre]}<br>旋律 ${currentEvents.melody.length} 音 ｜ 和弦 ${currentEvents.chords.length} 段 ｜ 鼓点 ${currentEvents.drums.length} 个。可点下方「导出 WAV」保存。`;
+      playCurrent();
+    });
   }
 
+  function stopPreview() { if (preview) { preview.stop(); preview = null; } }
+  advNext.addEventListener('click', () => {
+    if (advStep === 1 && !advGenre) return;
+    if (advStep === 2 && !advSelected.size) { alert('请至少勾选一段片段'); return; }
+    showAdvStep(Math.min(4, advStep + 1));
+  });
+  advBack.addEventListener('click', () => showAdvStep(Math.max(1, advStep - 1)));
+
+  // ============================================================
+  // 7) 导出 WAV（浏览器离线渲染，不占服务器）
+  // ============================================================
   function audioBufferToWav(ab) {
     const numCh = ab.numberOfChannels, len = ab.length, sr = ab.sampleRate;
     const bytesPerSample = 2, blockAlign = numCh * bytesPerSample, dataSize = len * blockAlign;
@@ -296,12 +547,12 @@
   }
 
   async function exportWav() {
-    if (!currentEvents) return alert('请先生成一段旋律');
+    if (!currentEvents) return alert('请先生成一段音乐');
     dlBtn.disabled = true; dlBtn.textContent = '渲染中…';
     try {
-      const ev = currentEvents, bpm = currentBpm;
+      const ev = currentEvents, bpm = currentBpm, set = currentInstrSet;
       const rendered = await Tone.Offline(async () => {
-        const inst = makeInstruments(currentParams.bright);
+        const inst = makeInstruments(set);
         Tone.Transport.bpm.value = bpm;
         scheduleOn(inst, ev);
         Tone.Transport.start();
@@ -315,148 +566,6 @@
     finally { dlBtn.disabled = false; dlBtn.textContent = '⬇ 导出 WAV'; }
   }
 
-  // ============================================================
-  // 5) 高级模式：段落编辑器
-  // ============================================================
-  const SECTIONS = [];
-  const sectionsEl = document.getElementById('sections');
-  const baseKeyNote = document.getElementById('baseKeyNote');
-  const baseKeyOct = document.getElementById('baseKeyOct');
-
-  function baseKeyMidi() {
-    const NOTE = { C: 0, 'C#': 1, D: 2, 'D#': 3, E: 4, F: 5, 'F#': 6, G: 7, 'G#': 8, A: 9, 'A#': 10, B: 11 };
-    return NOTE[baseKeyNote.value] + (parseInt(baseKeyOct.value, 10) + 1) * 12;
-  }
-
-  const SECTION_PRESETS = ['前奏 Intro', '主歌 Verse', '预副歌 Pre', '副歌 Chorus', '桥段 Bridge', '间奏 Inter', '尾奏 Outro', '自由'];
-  const TEMPLATES = {
-    pop: [
-      { name: '前奏 Intro', style: 'lofi', bars: 2, transpose: 0, dyn: 0.5, drums: false },
-      { name: '主歌 Verse', style: 'happy', bars: 4, transpose: 0, dyn: 0.75, drums: true },
-      { name: '副歌 Chorus', style: 'happy', bars: 4, transpose: 0, dyn: 1.0, drums: true },
-      { name: '桥段 Bridge', style: 'sad', bars: 4, transpose: 0, dyn: 0.8, drums: true },
-      { name: '副歌 Chorus', style: 'happy', bars: 4, transpose: 0, dyn: 1.0, drums: true },
-      { name: '尾奏 Outro', style: 'lofi', bars: 2, transpose: 0, dyn: 0.4, drums: false },
-    ],
-    ballad: [
-      { name: '前奏 Intro', style: 'sad', bars: 2, transpose: 0, dyn: 0.45, drums: false },
-      { name: '主歌 Verse', style: 'sad', bars: 4, transpose: 0, dyn: 0.7, drums: false },
-      { name: '副歌 Chorus', style: 'sad', bars: 4, transpose: 0, dyn: 0.9, drums: true },
-      { name: '桥段 Bridge', style: 'epic', bars: 4, transpose: 2, dyn: 0.85, drums: true },
-      { name: '副歌 Chorus', style: 'sad', bars: 4, transpose: 0, dyn: 0.9, drums: true },
-      { name: '尾奏 Outro', style: 'sad', bars: 2, transpose: 0, dyn: 0.35, drums: false },
-    ],
-    narrative: [
-      { name: '前奏 Intro', style: 'ambient', bars: 2, transpose: 0, dyn: 0.4, drums: false },
-      { name: '主歌 Verse', style: 'chinese', bars: 4, transpose: 0, dyn: 0.7, drums: true },
-      { name: '副歌 Chorus', style: 'chinese', bars: 4, transpose: 0, dyn: 1.0, drums: true },
-      { name: '桥段 Bridge', style: 'epic', bars: 4, transpose: 3, dyn: 0.85, drums: true },
-      { name: '副歌 Chorus', style: 'chinese', bars: 4, transpose: 3, dyn: 1.0, drums: true },
-      { name: '尾奏 Outro', style: 'ambient', bars: 2, transpose: 0, dyn: 0.35, drums: false },
-    ],
-  };
-
-  function styleOptions(sel) {
-    return Object.keys(STYLES)
-      .map((k) => `<option value="${k}" ${k === sel ? 'selected' : ''}>${STYLES[k].label}（${STYLES[k].emotion}）</option>`)
-      .join('');
-  }
-  function transposeOptions(t) {
-    let opts = '';
-    for (let i = -5; i <= 5; i++) {
-      const lbl = i === 0 ? '原调' : (i > 0 ? `升 ${i} 半音` : `降 ${-i} 半音`);
-      opts += `<option value="${i}" ${i === t ? 'selected' : ''}>${lbl}</option>`;
-    }
-    return opts;
-  }
-
-  function renderSections() {
-    if (!SECTIONS.length) {
-      sectionsEl.innerHTML = '<span class="note">尚未添加段落，点下方按钮用模板或手动添加。</span>';
-      return;
-    }
-    sectionsEl.innerHTML = SECTIONS.map((s, i) => `
-      <div class="sec-row">
-        <div class="sec-idx">${i + 1}</div>
-        <input class="sec-name" data-i="${i}" value="${s.name}" />
-        <select class="sec-style" data-i="${i}">${styleOptions(s.style)}</select>
-        <label>小节<input type="number" class="sec-bars" data-i="${i}" value="${s.bars}" min="1" max="16" /></label>
-        <label>调性<select class="sec-trans" data-i="${i}">${transposeOptions(s.transpose)}</select></label>
-        <label>力度<input type="range" class="sec-dyn" data-i="${i}" value="${s.dyn}" min="0.3" max="1" step="0.05" /></label>
-        <label>鼓<input type="checkbox" class="sec-drums" data-i="${i}" ${s.drums ? 'checked' : ''} /></label>
-        <button class="sec-del ghost" data-i="${i}">✕</button>
-      </div>`).join('');
-  }
-
-  function bindSectionEvents() {
-    sectionsEl.querySelectorAll('.sec-name').forEach((e) => e.addEventListener('change', () => (SECTIONS[e.dataset.i].name = e.value)));
-    sectionsEl.querySelectorAll('.sec-style').forEach((e) => e.addEventListener('change', () => (SECTIONS[e.dataset.i].style = e.value)));
-    sectionsEl.querySelectorAll('.sec-bars').forEach((e) => e.addEventListener('change', () => (SECTIONS[e.dataset.i].bars = Math.max(1, parseInt(e.value) || 1))));
-    sectionsEl.querySelectorAll('.sec-trans').forEach((e) => e.addEventListener('change', () => (SECTIONS[e.dataset.i].transpose = parseInt(e.value, 10))));
-    sectionsEl.querySelectorAll('.sec-dyn').forEach((e) => e.addEventListener('input', () => (SECTIONS[e.dataset.i].dyn = parseFloat(e.value))));
-    sectionsEl.querySelectorAll('.sec-drums').forEach((e) => e.addEventListener('change', () => (SECTIONS[e.dataset.i].drums = e.checked)));
-    sectionsEl.querySelectorAll('.sec-del').forEach((e) => e.addEventListener('click', () => { SECTIONS.splice(e.dataset.i, 1); renderSections(); }));
-  }
-
-  function loadTemplate(name) {
-    SECTIONS.length = 0;
-    TEMPLATES[name].forEach((s) => SECTIONS.push({ ...s }));
-    renderSections(); bindSectionEvents();
-  }
-
-  document.getElementById('tplPop').addEventListener('click', () => loadTemplate('pop'));
-  document.getElementById('tplBallad').addEventListener('click', () => loadTemplate('ballad'));
-  document.getElementById('tplNarr').addEventListener('click', () => loadTemplate('narrative'));
-  document.getElementById('addSec').addEventListener('click', () => {
-    SECTIONS.push({ name: '新段落', style: moodSel.value, bars: 4, transpose: 0, dyn: 0.85, drums: true });
-    renderSections(); bindSectionEvents();
-  });
-
-  advToggle.addEventListener('change', () => {
-    advPanel.style.display = advToggle.checked ? 'block' : 'none';
-    if (advToggle.checked && !SECTIONS.length) loadTemplate('pop');
-  });
-
-  // ============================================================
-  // 6) 生成入口
-  // ============================================================
-  let currentParams = null;
-
-  genBtn.addEventListener('click', async () => {
-    showRecommend();
-    let sections, bpm, label, meta;
-    if (advToggle.checked) {
-      if (!SECTIONS.length) return alert('请先添加至少一个段落');
-      bpm = Math.max(60, Math.min(180, parseInt(bpmEl.value) || 110));
-      const base = baseKeyMidi();
-      sections = SECTIONS.map((s) => ({
-        mood: STYLES[s.style], root: base + s.transpose, bars: s.bars, dyn: s.dyn, drums: s.drums,
-      }));
-      currentParams = { bright: true };
-      currentBpm = bpm;
-      currentEvents = concatSections(sections, bpm);
-      const trans = SECTIONS.map((s, i) => `${s.name}${s.transpose ? (s.transpose > 0 ? ` (+${s.transpose})` : ` (${s.transpose})`) : ''}`).join(' → ');
-      label = '高级模式 · 多段落';
-      meta = `共 ${SECTIONS.length} 段（${trans}），总 ${currentEvents.total.toFixed(1)} 秒`;
-    } else {
-      const inferred = inferPrompt(promptEl.value);
-      const key = inferred.ok ? inferred.style : moodSel.value;
-      bpm = parseInt(bpmEl.value) || 110;
-      const bars = parseInt(barsEl.value) || 8;
-      const s = STYLES[key];
-      currentParams = { bright: s.bright };
-      currentBpm = bpm;
-      currentEvents = concatSections([{ mood: s, root: s.root, bars, dyn: 0.85, drums: s.drum !== 'none' }], bpm);
-      label = `${s.label}（${s.emotion}）`;
-      meta = `${bpm} BPM · ${bars} 小节`;
-    }
-
-    out.style.display = 'block';
-    out.className = 'result ok';
-    out.innerHTML = `已生成：<b>${label}</b><br>${meta}<br>旋律 ${currentEvents.melody.length} 音 ｜ 和弦 ${currentEvents.chords.length} 段 ｜ 贝斯 ${currentEvents.bass.length} 音 ｜ 鼓点 ${currentEvents.drums.length} 个 ｜ 铺底 ${currentEvents.pad.length} 段。点击「停止」可随时结束。`;
-    await play();
-  });
-
-  stopBtn.addEventListener('click', stopLive);
+  stopBtn.addEventListener('click', () => { stopLive(); stopPreview(); });
   dlBtn.addEventListener('click', exportWav);
 })();
