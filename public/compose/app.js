@@ -281,20 +281,31 @@
     }, d.t));
   }
 
+  // 实时播放：用 Tone.now() 的绝对音频时间调度，每个片段独立 inst + 独立时间起点，
+  // 完全不共享全局 Transport，彻底规避「播放头停在结尾导致后续静音」的问题。
+  function playEvents(inst, ev) {
+    const base = Tone.now() + 0.06;
+    ev.melody.forEach((n) => inst.melody.triggerAttackRelease(n.note, n.dur, base + n.t, n.vel));
+    ev.chords.forEach((c) => inst.chord.triggerAttackRelease(c.notes, c.dur, base + c.t, c.vel));
+    ev.pad.forEach((c) => inst.pad.triggerAttackRelease(c.notes, c.dur, base + c.t, c.vel));
+    ev.bass.forEach((b) => inst.bass.triggerAttackRelease(b.note, b.dur, base + b.t, b.vel));
+    ev.drums.forEach((d) => {
+      if (d.type === 'kick') inst.kick.triggerAttackRelease('C1', '8n', base + d.t, d.vel);
+      else if (d.type === 'snare') inst.snare.triggerAttackRelease('16n', base + d.t, d.vel);
+      else inst.hat.triggerAttackRelease('32n', base + d.t, d.vel);
+    });
+  }
+
   async function startPlayback(events, set, bpm) {
     await Tone.start();
     const inst = makeInstruments(set);
-    // 关键：每次播放前必须把全局 Transport 的播放头归零，
-    // 否则上一段结束停在结尾，新排程的音符都在「过去」不会响。
-    Tone.Transport.stop();
-    Tone.Transport.cancel();
-    Tone.Transport.position = 0;
-    Tone.Transport.bpm.value = bpm;
-    scheduleOn(inst, events);
-    Tone.Transport.start();
+    playEvents(inst, events);
     let stopped = false;
-    const stop = () => { if (stopped) return; stopped = true; try { Tone.Transport.stop(); Tone.Transport.cancel(); } catch (e) {} disposeInst(inst); };
-    const to = setTimeout(stop, events.total * 1000 + 500);
+    const stop = () => {
+      if (stopped) return; stopped = true;
+      try { disposeInst(inst); } catch (e) {}
+    };
+    const to = setTimeout(() => { if (!stopped) { stopped = true; try { disposeInst(inst); } catch (e) {} } }, events.total * 1000 + 600);
     return { stop: () => { clearTimeout(to); stop(); } };
   }
 
@@ -557,6 +568,7 @@
       const ev = currentEvents, bpm = currentBpm, set = currentInstrSet;
       const rendered = await Tone.Offline(async () => {
         const inst = makeInstruments(set);
+        Tone.Transport.cancel();
         Tone.Transport.bpm.value = bpm;
         scheduleOn(inst, ev);
         Tone.Transport.start();
