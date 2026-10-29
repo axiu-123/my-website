@@ -284,8 +284,12 @@
   async function startPlayback(events, set, bpm) {
     await Tone.start();
     const inst = makeInstruments(set);
-    Tone.Transport.bpm.value = bpm;
+    // 关键：每次播放前必须把全局 Transport 的播放头归零，
+    // 否则上一段结束停在结尾，新排程的音符都在「过去」不会响。
+    Tone.Transport.stop();
     Tone.Transport.cancel();
+    Tone.Transport.position = 0;
+    Tone.Transport.bpm.value = bpm;
     scheduleOn(inst, events);
     Tone.Transport.start();
     let stopped = false;
