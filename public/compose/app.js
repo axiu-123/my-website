@@ -297,6 +297,7 @@
   }
 
   async function startPlayback(events, set, bpm) {
+    stopLive(); stopPreview();
     await Tone.start();
     const inst = makeInstruments(set);
     playEvents(inst, events);
@@ -318,7 +319,7 @@
     stopLive();
     live = await startPlayback(currentEvents, currentInstrSet, currentBpm);
   }
-  function stopLive() { if (live) { live.stop(); live = null; } }
+  function stopLive() { if (live) { try { live.stop(); } catch (e) {} live = null; } }
 
   genBtn.addEventListener('click', async () => {
     showRecommend();
@@ -441,9 +442,9 @@
     regen.addEventListener('click', () => { advFragments = []; advSelected = new Set(); renderStep2(); });
     advStep2.appendChild(regen);
 
-    wrap.querySelectorAll('.frag-play').forEach((btn) => btn.addEventListener('click', () => {
+    wrap.querySelectorAll('.frag-play').forEach((btn) => btn.addEventListener('click', async () => {
       const f = advFragments[+btn.dataset.id];
-      stopPreview(); preview = startPlayback(f.events, f.set, f.bpm);
+      stopPreview(); preview = await startPlayback(f.events, f.set, f.bpm);
     }));
     wrap.querySelectorAll('.frag-pick input').forEach((cb) => cb.addEventListener('change', () => {
       if (cb.checked) advSelected.add(+cb.dataset.id); else advSelected.delete(+cb.dataset.id);
@@ -456,8 +457,8 @@
   }
 
   function renderStep3() {
-    const ids = Array.from(advSelected);
-    if (!ids.length) { advStep3.innerHTML = '<p class="note">请先返回上一步至少勾选一段片段。</p>'; return; }
+    let ids = Array.from(advSelected);
+    if (!ids.length) { ids = [0]; advSelected = new Set([0]); }
     stopPreview();
     advStep3.innerHTML = '<p class="note">第 3 步 · 对所选片段做局部修改（乐器 / 移调 / 密度 / 小节 / 鼓），改完可即时试听。</p>';
     ids.forEach((id) => {
@@ -486,9 +487,9 @@
       f.set = { ...STYLES[advGenre].instr, melody: mel };
     };
     advStep3.querySelectorAll('.e-mel,.e-trans,.e-den,.e-bars,.e-drums').forEach((el) => el.addEventListener('change', () => apply(+el.dataset.id)));
-    advStep3.querySelectorAll('.e-play').forEach((btn) => btn.addEventListener('click', () => {
+    advStep3.querySelectorAll('.e-play').forEach((btn) => btn.addEventListener('click', async () => {
       apply(+btn.dataset.id); const f = advFragments[+btn.dataset.id];
-      stopPreview(); preview = startPlayback(f.events, f.set, f.bpm);
+      stopPreview(); preview = await startPlayback(f.events, f.set, f.bpm);
     }));
   }
 
@@ -532,7 +533,7 @@
     });
   }
 
-  function stopPreview() { if (preview) { preview.stop(); preview = null; } }
+  function stopPreview() { if (preview) { try { preview.stop(); } catch (e) {} preview = null; } }
   advNext.addEventListener('click', () => {
     if (advStep === 1 && !advGenre) return;
     if (advStep === 2 && !advSelected.size) { alert('请至少勾选一段片段'); return; }
