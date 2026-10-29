@@ -5,13 +5,30 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>音乐解析下载 · 多功能聚合站</title>
 <link rel="stylesheet" href="/assets/style.css" />
+<style>
+  .card { border: 1px solid var(--border, #e3e3e8); border-radius: 10px; padding: 10px 12px; margin-bottom: 10px; background: var(--panel-2, #fafafd); }
+  .c-name { font-weight: 600; word-break: break-all; }
+  .c-status { margin: 6px 0; font-size: 14px; }
+  .c-status.ok { color: #1a9e4b; }
+  .c-status.error { color: #d23b3b; }
+  .c-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+  .c-actions a, .c-actions button { margin: 0; }
+</style>
 </head>
 <body>
 <header class="topbar" id="topbar"></header>
 <main>
   <div class="panel">
-    <h2>🎵 音乐解析 · 转 MP3 下载</h2>
-    <p class="desc">支持 QQ音乐 与 网易云音乐 的歌曲链接/ID 解析，获取直链后一键下载为 MP3。请遵守相关平台服务条款与版权规定，仅用于个人合法用途。</p>
+    <h2>📂 本地加密歌曲 → MP3</h2>
+    <p class="desc">选择你电脑/手机里「会员下载」的加密歌曲：网易云 <b>.ncm</b>，QQ 音乐 <b>.qmc / .qmc0 / .qmc3 / .qmcflac / .qmcogg / .mflac / .mgg / .bkcmp3 / .bkcflac / .tkm</b>。解密与转码<b>全部在你的浏览器本地完成</b>，文件不会上传任何服务器。</p>
+    <input type="file" id="fileInput" multiple accept=".ncm,.qmc,.qmc0,.qmc3,.qmcflac,.qmcogg,.mflac,.mgg,.bkcmp3,.bkcflac,.tkm" />
+    <div id="fileList" style="margin-top:12px;"></div>
+    <p class="note">仅用于转换你已合法获取的个人音频做备份。无损格式（flac / m4a）可「下载原格式」或「转 MP3」（转码在本地浏览器进行，较长歌曲稍慢，手机可能吃力）。</p>
+  </div>
+
+  <div class="panel">
+    <h2>🔗 在线链接解析（已不可靠，保留备用）</h2>
+    <p class="desc">支持 QQ音乐 与 网易云音乐 的歌曲链接/ID 解析。注意：第三方公开解析源大多已失效或被平台风控，<b>搜索 / 直链很可能失败</b>；推荐用上面的「本地文件」方式。</p>
 
     <label>平台</label>
     <select id="platform">
@@ -35,6 +52,14 @@
   </div>
 </main>
 <footer class="foot">多功能聚合站</footer>
+
+<!-- 解密/转码依赖（纯浏览器端，不依赖服务器） -->
+<script src="/vendor/lame.min.js"></script>
+<script src="/vendor/ncmdump.umd.js"></script>
+<script src="/music/decoders/qmc-mask.js"></script>
+<script src="/music/decoders/qmc.js"></script>
+<script src="/music/decoders/ncm.js"></script>
+<script src="/music/decoders/transcode.js"></script>
 <script src="/assets/common.js"></script>
 <script src="/music/app.js"></script>
 <script>renderNav('music');</script>
