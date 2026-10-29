@@ -5,6 +5,29 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>AI 智能作曲 · 多功能聚合站</title>
 <link rel="stylesheet" href="/assets/style.css" />
+<style>
+  .recommend {
+    background: var(--card, #fff);
+    border: 1px dashed var(--accent, #ff9100);
+    border-radius: 10px;
+    padding: 10px 14px;
+    margin: 10px 0;
+    display: none;
+  }
+  .mode-line { margin: 12px 0; }
+  #advPanel { display: none; margin-top: 12px; border-top: 1px solid var(--line, #ddd); padding-top: 12px; }
+  .sec-row {
+    display: flex; flex-wrap: wrap; gap: 8px; align-items: center;
+    background: var(--card, #fff); border: 1px solid var(--line, #ddd);
+    border-radius: 8px; padding: 8px 10px; margin-bottom: 8px;
+  }
+  .sec-idx { width: 22px; height: 22px; border-radius: 50%; background: var(--accent, #ff9100); color: #fff;
+    display: inline-flex; align-items: center; justify-content: center; font-size: 12px; }
+  .sec-row input[type=text], .sec-row select { padding: 4px 6px; }
+  .sec-row label { font-size: 12px; display: inline-flex; gap: 4px; align-items: center; }
+  .sec-name { width: 120px; }
+  .tpl-btns { margin: 8px 0; }
+</style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
 </head>
 <body>
@@ -12,10 +35,11 @@
 <main>
   <div class="panel">
     <h2>🎼 AI 智能作曲（参考 Suno）</h2>
-    <p class="desc">用一句话描述你想要的曲风，或选择风格/情绪，本地生成式引擎会即时创作一段旋律与和声并播放。无需联网、无需密钥，也可在 .env 中接入 Suno 类外部服务获得更强能力。</p>
+    <p class="desc">用一句话描述你想要的曲风，系统会推荐风格、情绪与合适的速度；也可切换到<b>高级模式</b>编排多段落、做情感转变与调性转换，创作更完整的作品。全部在本地浏览器生成，无需联网、无需密钥。</p>
 
     <label>创作提示词（自然语言，可选）</label>
-    <input type="text" id="prompt" placeholder="例如：一段欢快的电子舞曲，适合跑步" />
+    <input type="text" id="prompt" placeholder="例如：一段悲伤但燃起来的史诗感音乐，适合游戏高潮，要完整一点" />
+    <div class="recommend" id="recommend"></div>
 
     <div class="row">
       <div>
@@ -26,6 +50,11 @@
           <option value="electronic">电子 / EDM</option>
           <option value="chinese">古风 / 中国风</option>
           <option value="lofi">Lo-Fi 放松</option>
+          <option value="epic">史诗 / 电影感</option>
+          <option value="jazz">爵士 / R&B 柔</option>
+          <option value="rock">摇滚 / 流行燃</option>
+          <option value="ambient">氛围 / 纯音乐</option>
+          <option value="rnb">R&B / 慢摇</option>
         </select>
       </div>
       <div>
@@ -34,8 +63,36 @@
       </div>
       <div>
         <label>小节数</label>
-        <input type="number" id="bars" value="4" min="2" max="16" />
+        <input type="number" id="bars" value="8" min="2" max="32" />
       </div>
+    </div>
+
+    <div class="mode-line">
+      <label><input type="checkbox" id="advToggle" /> 高级模式（多段落编排 · 情感转变 · 调性转换）</label>
+    </div>
+
+    <div id="advPanel">
+      <p class="note">基础调（后续段落可用「调性」相对它移调，实现升调/降调）：</p>
+      <div class="row">
+        <div><label>根音</label>
+          <select id="baseKeyNote">
+            <option>C</option><option>C#</option><option>D</option><option>D#</option><option>E</option>
+            <option>F</option><option>F#</option><option>G</option><option>G#</option><option>A</option>
+            <option>A#</option><option>B</option>
+          </select>
+        </div>
+        <div><label>八度</label>
+          <select id="baseKeyOct"><option value="3">3</option><option value="4" selected>4</option><option value="5">5</option></select>
+        </div>
+      </div>
+      <p class="note">段落模板（适合不同创作意图）：</p>
+      <div class="tpl-btns">
+        <button class="ghost" id="tplPop">流行叙事</button>
+        <button class="ghost" id="tplBallad">抒情 Ballad</button>
+        <button class="ghost" id="tplNarr">进阶叙事（含转调）</button>
+        <button class="ghost" id="addSec">＋ 添加段落</button>
+      </div>
+      <div id="sections"></div>
     </div>
 
     <button class="primary" id="gen">🎲 生成并播放</button>
@@ -43,7 +100,7 @@
     <button class="ghost" id="dl" style="margin-left:10px;">⬇ 导出 WAV</button>
 
     <div class="result" id="out" style="display:none;"></div>
-    <p class="note">说明：本页为端侧生成式作曲（Tone.js 合成），每次生成旋律带有随机性，可多次点击「生成并播放」获得不同版本。导出 WAV 由浏览器本地渲染完成，不占用服务器。</p>
+    <p class="note">说明：本页为端侧生成式作曲（Tone.js 合成），每次生成带有随机性，可多次点击获得不同版本。导出 WAV 由浏览器本地渲染，不占用服务器。高级模式支持前奏→主歌→副歌→桥段→尾奏的结构，桥段可设不同情绪与移调，实现情感与调性的转变。</p>
   </div>
 </main>
 <footer class="foot">多功能聚合站</footer>
