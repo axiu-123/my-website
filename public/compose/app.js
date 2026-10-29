@@ -38,59 +38,110 @@
   // ============================================================
   // 2) 乐器工厂：按音色创建 Tone.js 乐器（不再清一色电子 Synth）
   // ============================================================
+  // 每个乐器返回 { voice, out, fx }：voice 用于 triggerAttackRelease，
+  // out 是效果链末端（接外部混响/延迟），fx 为需释放的效果节点。真实度来自更自然
+  // 的包络 + 专属效果链（失真/颤音/合唱/旋转音箱等）。
   function makeTimbre(t) {
     switch (t) {
-      case 'piano':
-        return new Tone.PolySynth(Tone.FMSynth, { volume: -7, harmonicity: 1, modulationIndex: 1.4,
+      case 'piano': {
+        const v = new Tone.PolySynth(Tone.FMSynth, { volume: -7, harmonicity: 1, modulationIndex: 1.3,
           oscillator: { type: 'sine' }, modulation: { type: 'triangle' },
-          envelope: { attack: 0.004, decay: 1.3, sustain: 0.2, release: 1.1 } });
-      case 'epiano':
-        return new Tone.PolySynth(Tone.FMSynth, { volume: -9, harmonicity: 0.5, modulationIndex: 2.2,
+          envelope: { attack: 0.002, decay: 1.4, sustain: 0.12, release: 1.6 } });
+        const ch = new Tone.Chorus({ frequency: 2.5, delayTime: 0.2, depth: 0.03 }); ch.start();
+        v.connect(ch);
+        return { voice: v, out: ch, fx: [ch] };
+      }
+      case 'epiano': {
+        const v = new Tone.PolySynth(Tone.FMSynth, { volume: -9, harmonicity: 0.5, modulationIndex: 3,
           oscillator: { type: 'sine' }, modulation: { type: 'sine' },
-          envelope: { attack: 0.006, decay: 0.8, sustain: 0.4, release: 1.0 } });
-      case 'rockGuitar':
-        return new Tone.PolySynth(Tone.FMSynth, { volume: -10, harmonicity: 0.5, modulationIndex: 1.3,
+          envelope: { attack: 0.005, decay: 0.8, sustain: 0.3, release: 1.2 } });
+        const tr = new Tone.Tremolo({ frequency: 4.5, depth: 0.08 }); tr.start();
+        v.connect(tr);
+        return { voice: v, out: tr, fx: [tr] };
+      }
+      case 'rockGuitar': {
+        const v = new Tone.PolySynth(Tone.FMSynth, { volume: -10, harmonicity: 0.5, modulationIndex: 1.2,
           oscillator: { type: 'sawtooth' }, modulation: { type: 'square' },
-          envelope: { attack: 0.008, decay: 0.4, sustain: 0.35, release: 0.5 } });
-      case 'acGuitar':
-        return new Tone.PolySynth(Tone.PluckSynth, { volume: -4, attackNoise: 1, dampening: 4500, resonance: 0.85 });
-      case 'sax':
-        return new Tone.PolySynth(Tone.AMSynth, { volume: -8, harmonicity: 1,
+          envelope: { attack: 0.004, decay: 0.35, sustain: 0.3, release: 0.5 } });
+        const dist = new Tone.Distortion(0.4);
+        const cab = new Tone.Filter(2800, 'lowpass');
+        v.connect(dist); dist.connect(cab);
+        return { voice: v, out: cab, fx: [dist, cab] };
+      }
+      case 'acGuitar': {
+        const v = new Tone.PolySynth(Tone.PluckSynth, { volume: -4, attackNoise: 1, dampening: 4200, resonance: 0.92 });
+        return { voice: v, out: v, fx: [] };
+      }
+      case 'sax': {
+        const v = new Tone.PolySynth(Tone.AMSynth, { volume: -8, harmonicity: 1,
           oscillator: { type: 'sawtooth' }, modulation: { type: 'square' },
-          envelope: { attack: 0.04, decay: 0.2, sustain: 0.7, release: 0.4 } });
-      case 'trumpet':
-        return new Tone.PolySynth(Tone.AMSynth, { volume: -9, harmonicity: 1,
+          envelope: { attack: 0.06, decay: 0.2, sustain: 0.7, release: 0.5 } });
+        const vib = new Tone.Vibrato({ frequency: 5.2, depth: 0.06 }); vib.start();
+        v.connect(vib);
+        return { voice: v, out: vib, fx: [vib] };
+      }
+      case 'trumpet': {
+        const v = new Tone.PolySynth(Tone.AMSynth, { volume: -9, harmonicity: 1,
           oscillator: { type: 'square' }, modulation: { type: 'sawtooth' },
-          envelope: { attack: 0.03, decay: 0.15, sustain: 0.7, release: 0.35 } });
-      case 'strings':
-        return new Tone.PolySynth(Tone.Synth, { volume: -12, oscillator: { type: 'triangle' },
-          envelope: { attack: 0.3, decay: 0.3, sustain: 0.8, release: 1.4 } });
-      case 'organ':
-        return new Tone.PolySynth(Tone.Synth, { volume: -12, oscillator: { type: 'fatsine', count: 3, spread: 25 },
-          envelope: { attack: 0.02, decay: 0.2, sustain: 0.7, release: 0.5 } });
-      case 'lead':
-        return new Tone.PolySynth(Tone.Synth, { volume: -10, oscillator: { type: 'sawtooth' },
+          envelope: { attack: 0.04, decay: 0.15, sustain: 0.7, release: 0.4 } });
+        const vib = new Tone.Vibrato({ frequency: 5.5, depth: 0.05 }); vib.start();
+        v.connect(vib);
+        return { voice: v, out: vib, fx: [vib] };
+      }
+      case 'strings': {
+        const v = new Tone.PolySynth(Tone.Synth, { volume: -13, oscillator: { type: 'triangle' },
+          envelope: { attack: 0.4, decay: 0.3, sustain: 0.8, release: 1.6 } });
+        const ch = new Tone.Chorus({ frequency: 3, delayTime: 0.2, depth: 0.05 }); ch.start();
+        v.connect(ch);
+        return { voice: v, out: ch, fx: [ch] };
+      }
+      case 'organ': {
+        const v = new Tone.PolySynth(Tone.Synth, { volume: -12, oscillator: { type: 'fatsine', count: 3, spread: 20 },
+          envelope: { attack: 0.02, decay: 0.2, sustain: 0.7, release: 0.6 } });
+        const rot = new Tone.Rotary({ frequency: 5, depth: 0.4 }); rot.start();
+        v.connect(rot);
+        return { voice: v, out: rot, fx: [rot] };
+      }
+      case 'lead': {
+        const v = new Tone.PolySynth(Tone.Synth, { volume: -10, oscillator: { type: 'sawtooth' },
           envelope: { attack: 0.01, decay: 0.2, sustain: 0.5, release: 0.3 } });
-      case 'bell':
-        return new Tone.PolySynth(Tone.Synth, { volume: -10, oscillator: { type: 'sine' },
+        const dist = new Tone.Distortion(0.15);
+        v.connect(dist);
+        return { voice: v, out: dist, fx: [dist] };
+      }
+      case 'bell': {
+        const v = new Tone.PolySynth(Tone.Synth, { volume: -10, oscillator: { type: 'sine' },
           envelope: { attack: 0.002, decay: 1.0, sustain: 0.0, release: 0.8 } });
-      case 'pad':
-        return new Tone.PolySynth(Tone.Synth, { volume: -16, oscillator: { type: 'triangle' },
-          envelope: { attack: 0.5, decay: 0.4, sustain: 0.7, release: 1.4 } });
+        return { voice: v, out: v, fx: [] };
+      }
+      case 'pad': {
+        const v = new Tone.PolySynth(Tone.Synth, { volume: -16, oscillator: { type: 'triangle' },
+          envelope: { attack: 0.5, decay: 0.4, sustain: 0.7, release: 1.6 } });
+        const ch = new Tone.Chorus({ frequency: 2.8, delayTime: 0.2, depth: 0.06 }); ch.start();
+        v.connect(ch);
+        return { voice: v, out: ch, fx: [ch] };
+      }
       case 'pluck':
-      default:
-        return new Tone.PolySynth(Tone.PluckSynth, { volume: -4, attackNoise: 1, dampening: 5000, resonance: 0.9 });
+      default: {
+        const v = new Tone.PolySynth(Tone.PluckSynth, { volume: -4, attackNoise: 1, dampening: 5000, resonance: 0.9 });
+        return { voice: v, out: v, fx: [] };
+      }
     }
   }
 
   function makeBass(t) {
     const base = { volume: -8, envelope: { attack: 0.01, decay: 0.2, sustain: 0.6, release: 0.3 } };
     switch (t) {
-      case 'fretless': return new Tone.MonoSynth({ ...base, volume: -6, oscillator: { type: 'sine' }, envelope: { attack: 0.02, decay: 0.3, sustain: 0.7, release: 0.5 } });
-      case 'upright':  return new Tone.MonoSynth({ ...base, volume: -7, oscillator: { type: 'sine' }, envelope: { attack: 0.03, decay: 0.4, sustain: 0.5, release: 0.6 } });
-      case 'rockBass': return new Tone.MonoSynth({ ...base, volume: -7, oscillator: { type: 'sawtooth' }, envelope: { attack: 0.01, decay: 0.2, sustain: 0.6, release: 0.25 } });
+      case 'fretless': { const v = new Tone.MonoSynth({ ...base, volume: -6, oscillator: { type: 'sine' }, envelope: { attack: 0.02, decay: 0.3, sustain: 0.7, release: 0.5 } }); return { voice: v, out: v, fx: [] }; }
+      case 'upright':  { const v = new Tone.MonoSynth({ ...base, volume: -7, oscillator: { type: 'sine' }, envelope: { attack: 0.03, decay: 0.4, sustain: 0.5, release: 0.6 } }); return { voice: v, out: v, fx: [] }; }
+      case 'rockBass': {
+        const v = new Tone.MonoSynth({ ...base, volume: -7, oscillator: { type: 'sawtooth' }, envelope: { attack: 0.01, decay: 0.2, sustain: 0.6, release: 0.25 } });
+        const dist = new Tone.Distortion(0.25);
+        v.connect(dist);
+        return { voice: v, out: dist, fx: [dist] };
+      }
       case 'synthBass':
-      default:         return new Tone.MonoSynth({ ...base, oscillator: { type: 'square' } });
+      default:         { const v = new Tone.MonoSynth({ ...base, oscillator: { type: 'square' } }); return { voice: v, out: v, fx: [] }; }
     }
   }
 
@@ -98,18 +149,17 @@
   function makeInstruments(set) {
     const reverb = new Tone.Freeverb({ roomSize: 0.72, dampening: 3500, wet: 0.22 }).toDestination();
     const delay = new Tone.FeedbackDelay('8n', 0.15); delay.wet.value = 0.15; delay.connect(reverb);
-    const melody = makeTimbre(set.melody);
-    const chord = makeTimbre(set.chord);
-    const pad = makeTimbre(set.pad);
-    const bass = makeBass(set.bass);
-    melody.connect(reverb); melody.connect(delay);
-    chord.connect(reverb);
-    pad.connect(reverb);
-    bass.toDestination();
+    const fxAll = [reverb, delay];
+    const build = (t) => { const w = makeTimbre(t); w.out.connect(reverb); w.out.connect(delay); fxAll.push(...w.fx); return w.voice; };
+    const melody = build(set.melody);
+    const chord = build(set.chord);
+    const pad = build(set.pad);
+    const bassW = makeBass(set.bass);
+    const bass = bassW.voice; bassW.out.toDestination(); fxAll.push(...bassW.fx);
     const kick = new Tone.MembraneSynth({ volume: -6 }).toDestination();
     const snare = new Tone.NoiseSynth({ volume: -12, noise: { type: 'white' }, envelope: { attack: 0.001, decay: 0.18 } }).toDestination();
     const hat = new Tone.NoiseSynth({ volume: -20, noise: { type: 'white' }, envelope: { attack: 0.001, decay: 0.04 } }).toDestination();
-    return { melody, chord, pad, bass, kick, snare, hat, _fx: [reverb, delay] };
+    return { melody, chord, pad, bass, kick, snare, hat, _fx: fxAll };
   }
 
   function disposeInst(inst) {
@@ -296,17 +346,23 @@
     });
   }
 
+  function setProgress(p) { const bar = document.getElementById('progressBar'); if (bar) bar.style.width = (Math.max(0, Math.min(1, p)) * 100).toFixed(1) + '%'; }
+
   async function startPlayback(events, set, bpm) {
     stopLive(); stopPreview();
     await Tone.start();
     const inst = makeInstruments(set);
     playEvents(inst, events);
+    const totalMs = events.total * 1000 + 600;
+    const startT = performance.now();
     let stopped = false;
+    setProgress(0);
+    const iv = setInterval(() => { if (stopped) return; setProgress((performance.now() - startT) / totalMs); }, 100);
     const stop = () => {
-      if (stopped) return; stopped = true;
+      if (stopped) return; stopped = true; clearInterval(iv); setProgress(0);
       try { disposeInst(inst); } catch (e) {}
     };
-    const to = setTimeout(() => { if (!stopped) { stopped = true; try { disposeInst(inst); } catch (e) {} } }, events.total * 1000 + 600);
+    const to = setTimeout(stop, totalMs + 200);
     return { stop: () => { clearTimeout(to); stop(); } };
   }
 
@@ -528,7 +584,9 @@
       const res = document.getElementById('advResult');
       res.style.display = 'block'; res.className = 'result ok';
       const struct = sections.map((s, i) => `第${i + 1}段`).join(' → ');
-      res.innerHTML = `✅ AI 已完成作曲：<b>${STYLES[advGenre].label}</b> 完整歌曲<br>结构：${struct} ｜ 共 ${currentEvents.total.toFixed(1)} 秒 ｜ 旋律乐器：${TIMBRE_LABELS[melodyTimbre]}<br>旋律 ${currentEvents.melody.length} 音 ｜ 和弦 ${currentEvents.chords.length} 段 ｜ 鼓点 ${currentEvents.drums.length} 个。可点下方「导出 WAV」保存。`;
+      res.innerHTML = `✅ AI 已完成作曲：<b>${STYLES[advGenre].label}</b> 完整歌曲<br>结构：${struct} ｜ 共 ${currentEvents.total.toFixed(1)} 秒 ｜ 旋律乐器：${TIMBRE_LABELS[melodyTimbre]}<br>旋律 ${currentEvents.melody.length} 音 ｜ 和弦 ${currentEvents.chords.length} 段 ｜ 鼓点 ${currentEvents.drums.length} 个。<div class="export-row"><button class="primary" id="advDlWav">⬇ 导出 WAV</button><button class="ghost" id="advDlMp3">⬇ 导出 MP3</button></div>`;
+      document.getElementById('advDlWav').addEventListener('click', (e) => doExport('wav', e.currentTarget));
+      document.getElementById('advDlMp3').addEventListener('click', (e) => doExport('mp3', e.currentTarget));
       playCurrent();
     });
   }
@@ -544,6 +602,13 @@
   // ============================================================
   // 7) 导出 WAV（浏览器离线渲染，不占服务器）
   // ============================================================
+  function downloadBlob(blob, name) {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = name; a.click();
+    setTimeout(() => URL.revokeObjectURL(url), 2000);
+  }
+
   function audioBufferToWav(ab) {
     const numCh = ab.numberOfChannels, len = ab.length, sr = ab.sampleRate;
     const bytesPerSample = 2, blockAlign = numCh * bytesPerSample, dataSize = len * blockAlign;
@@ -562,27 +627,58 @@
     return new Blob([buffer], { type: 'audio/wav' });
   }
 
-  async function exportWav() {
+  function audioBufferToMp3(ab, kbps) {
+    const lame = window.lamejs;
+    if (!lame) return null;
+    const ch = ab.numberOfChannels, sr = ab.sampleRate;
+    const enc = new lame.Mp3Encoder(ch, sr, kbps || 192);
+    const l = ab.getChannelData(0), r = ch > 1 ? ab.getChannelData(1) : l;
+    const li = new Int16Array(l.length), ri = new Int16Array(r.length);
+    for (let i = 0; i < l.length; i++) {
+      const sl = Math.max(-1, Math.min(1, l[i])); li[i] = sl < 0 ? sl * 0x8000 : sl * 0x7fff;
+      const sr2 = Math.max(-1, Math.min(1, r[i])); ri[i] = sr2 < 0 ? sr2 * 0x8000 : sr2 * 0x7fff;
+    }
+    const bs = 1152, data = [];
+    for (let i = 0; i < li.length; i += bs) {
+      const lb = li.subarray(i, i + bs), rb = ri.subarray(i, i + bs);
+      const buf = ch > 1 ? enc.encodeBuffer(lb, rb) : enc.encodeBuffer(lb);
+      if (buf.length) data.push(new Int8Array(buf));
+    }
+    const end = enc.flush();
+    if (end.length) data.push(new Int8Array(end));
+    return new Blob(data, { type: 'audio/mpeg' });
+  }
+
+  async function renderBuffer() {
+    if (!currentEvents) throw new Error('请先生成一段音乐');
+    const ev = currentEvents, bpm = currentBpm, set = currentInstrSet;
+    return await Tone.Offline(async () => {
+      Tone.Transport.cancel();
+      const inst = makeInstruments(set);
+      Tone.Transport.bpm.value = bpm;
+      scheduleOn(inst, ev);
+      Tone.Transport.start();
+    }, ev.total + 0.6);
+  }
+
+  async function doExport(kind, btn) {
     if (!currentEvents) return alert('请先生成一段音乐');
-    dlBtn.disabled = true; dlBtn.textContent = '渲染中…';
+    btn.disabled = true; const old = btn.textContent; btn.textContent = '渲染中…';
     try {
-      const ev = currentEvents, bpm = currentBpm, set = currentInstrSet;
-      const rendered = await Tone.Offline(async () => {
-        const inst = makeInstruments(set);
-        Tone.Transport.cancel();
-        Tone.Transport.bpm.value = bpm;
-        scheduleOn(inst, ev);
-        Tone.Transport.start();
-      }, ev.total + 0.6);
-      const blob = audioBufferToWav(rendered);
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url; a.download = `composition_${Date.now()}.wav`; a.click();
-      URL.revokeObjectURL(url);
+      const ab = await renderBuffer();
+      if (kind === 'mp3') {
+        const blob = audioBufferToMp3(ab, 192);
+        if (!blob) { alert('当前环境缺少 MP3 编码器，已改导出 WAV'); downloadBlob(audioBufferToWav(ab), `composition_${Date.now()}.wav`); }
+        else downloadBlob(blob, `composition_${Date.now()}.mp3`);
+      } else {
+        downloadBlob(audioBufferToWav(ab), `composition_${Date.now()}.wav`);
+      }
     } catch (e) { alert('导出失败：' + e.message); }
-    finally { dlBtn.disabled = false; dlBtn.textContent = '⬇ 导出 WAV'; }
+    finally { btn.disabled = false; btn.textContent = old; }
   }
 
   stopBtn.addEventListener('click', () => { stopLive(); stopPreview(); });
-  dlBtn.addEventListener('click', exportWav);
+  dlBtn.addEventListener('click', (e) => doExport('wav', e.currentTarget));
+  const dlMp3El = document.getElementById('dlMp3');
+  if (dlMp3El) dlMp3El.addEventListener('click', (e) => doExport('mp3', e.currentTarget));
 })();
