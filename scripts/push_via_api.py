@@ -21,7 +21,7 @@ import urllib.request
 
 REPO = "axiu-123/my-website"
 BRANCH = "main"
-MESSAGE = "feat(music): 本地文件浏览器端解密转码（网易云 ncm / QQ音乐 qmc）"
+MESSAGE = "feat(compose): 风格化乐器库 + 基础/高级双模式向导；含查重试听、音乐本地解密、翻译与AI聊天修复"
 DEFAULT_FILES = [
     "public/music/index.html",
     "public/music/app.js",
