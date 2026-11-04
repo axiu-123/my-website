@@ -143,8 +143,10 @@ const CAKE_IMG = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIAAAACACAYAAADD
     if(_upT4){ clearTimeout(_upT4); _upT4=null; }
     if(_cuteEndTimer){ clearTimeout(_cuteEndTimer); _cuteEndTimer=null; }
     if(_cutePhase2){ clearTimeout(_cutePhase2); _cutePhase2=null; }
+    if(_heartTimer){ clearInterval(_heartTimer); _heartTimer=null; }
     actEl.classList.remove('pet-nuzzle','pet-reach'); actEl.style.transform='';
     if(_handEl && _handEl.parentNode){ _handEl.remove(); _handEl=null; }
+    if(_blushEl && _blushEl.parentNode){ _blushEl.remove(); _blushEl=null; }
     window.__setEyesClosed(false);
     _name=null; _sitMode=false; _transitioning=false;
     actEl.style.display='none';
@@ -229,25 +231,45 @@ const CAKE_IMG = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIAAAACACAYAAADD
   function showHand(){
     if(_handEl && _handEl.parentNode) return;
     var h=document.createElement('div'); h.className='pet-hand';
-    h.innerHTML='<div class="ph-in"><svg viewBox="0 0 64 64" width="64" height="64" xmlns="http://www.w3.org/2000/svg">'+
-      '<g fill="#ffe0bd" stroke="#e6a87c" stroke-width="2.2" stroke-linejoin="round">'+
-      '<rect x="21" y="0" width="22" height="20" rx="7"/>'+          // 前臂（从上方伸入）
-      '<ellipse cx="32" cy="31" rx="21" ry="16"/>'+                  // 手掌
-      '<rect x="12" y="34" width="8" height="18" rx="4" transform="rotate(-14 16 43)"/>'+
-      '<rect x="23" y="39" width="8" height="22" rx="4"/>'+
-      '<rect x="33" y="39" width="8" height="22" rx="4"/>'+
-      '<rect x="43" y="34" width="8" height="18" rx="4" transform="rotate(14 47 43)"/>'+
-      '<rect x="50" y="27" width="8" height="14" rx="4" transform="rotate(30 54 34)"/>'+
-      '</g></svg></div>';
+    h.innerHTML='<div class="ph-in"><svg viewBox="0 0 64 64" width="66" height="66" xmlns="http://www.w3.org/2000/svg">'
+      + '<g fill="#ffe3c8" stroke="#f2b497" stroke-width="2" stroke-linejoin="round" stroke-linecap="round">'
+      + '<rect x="22" y="-2" width="20" height="22" rx="9"/>'                                  // 前臂
+      + '<ellipse cx="32" cy="30" rx="20" ry="15"/>'                                            // 手掌
+      + '<rect x="12" y="33" width="9" height="15" rx="4.5" transform="rotate(-12 16 40)"/>'     // 小指
+      + '<rect x="22" y="36" width="9" height="20" rx="4.5"/>'                                   // 无名指
+      + '<rect x="31" y="37" width="9" height="21" rx="4.5"/>'                                   // 中指
+      + '<rect x="40" y="36" width="9" height="20" rx="4.5"/>'                                   // 食指
+      + '<rect x="49" y="31" width="9" height="15" rx="4.5" transform="rotate(16 53 38)"/>'      // 拇指
+      + '</g></svg></div>';
     petEl.appendChild(h); _handEl=h;
   }
   function hideHand(){ if(_handEl && _handEl.parentNode){ _handEl.remove(); _handEl=null; } }
+  function showBlush(){
+    if(_blushEl && _blushEl.parentNode) return;
+    var b=document.createElement('div'); b.className='pet-blush';
+    b.innerHTML='<span class="b b1"></span><span class="b b2"></span>';
+    petEl.appendChild(b); _blushEl=b;
+    requestAnimationFrame(function(){ b.classList.add('on'); });
+  }
+  function hideBlush(){ if(_blushEl && _blushEl.parentNode){ _blushEl.remove(); _blushEl=null; } }
+  function spawnHearts(){
+    stopHearts();
+    var n=0;
+    _heartTimer=setInterval(function(){
+      if(n++>=5){ stopHearts(); return; }
+      var h=document.createElement('div'); h.className='pet-heart'; h.textContent='\u2665';
+      h.style.setProperty('--dx', (Math.random()*44-22).toFixed(0)+'px');
+      petEl.appendChild(h);
+      setTimeout(function(){ if(h.parentNode) h.remove(); }, 1720);
+    }, 600);
+  }
+  function stopHearts(){ if(_heartTimer){ clearInterval(_heartTimer); _heartTimer=null; } }
   /* 撒娇/抚摸（双击）：连贯两段式
      阶段1：手从上方落下、在头顶左右来回抚摸；桌宠睁眼抬头、略前倾（期待被摸）。
      阶段2：桌宠主动蹭向那只手（向上贴合 + 左右轻蹭）、闭眼，呈享受放松态。 */
   function playCute(){
     if(!ACTIONS.cute) return;
-    stopAction();                            // 清场（顺带移除手、恢复睁眼、收起残留姿态）
+    stopAction();                            // 清场（收手/睁眼/收腮红/停爱心/清残留）
     _name='__cute__'; _sitMode=false;
     figEl.style.opacity='0';
     actEl.style.display='block';
@@ -255,24 +277,26 @@ const CAKE_IMG = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIAAAACACAYAAADD
     const seq=ACTIONS.cute, r=RHYTHM.cute||[];
     let i=0;
     (function step(){ actImg.src=seq[i]; _timer=setTimeout(function(){ i=(i+1)%seq.length; step(); }, r[i]||DEFAULT_MS); })();
-    // —— 阶段1：手落下并左右抚摸；桌宠睁眼、略前倾期待 ——
-    window.__setEyesClosed(false);
+    // 闭眼享受 + 圆润的手轻柔抚摸 + 脸颊泛红 + 头顶飘爱心
+    window.__setEyesClosed(true);
     showHand();
+    showBlush();
+    spawnHearts();
+    // 阶段1：轻轻抬头、期待被摸
     actEl.classList.add('pet-reach');
-    // —— 阶段2：桌宠主动蹭向手、闭眼、放松享受 ——
     if(_cutePhase2) clearTimeout(_cutePhase2);
     _cutePhase2=setTimeout(function(){
       actEl.classList.remove('pet-reach');
-      actEl.classList.add('pet-nuzzle');
-      window.__setEyesClosed(true);
-    }, 1500);
-    // —— 收尾：收手、睁眼、回待机 ——
+      actEl.classList.add('pet-nuzzle');      // 主动轻轻蹭向手
+    }, 1400);
+    // 收尾：收手、收腮红、停爱心、睁眼、回待机
     if(_cuteEndTimer) clearTimeout(_cuteEndTimer);
     _cuteEndTimer=setTimeout(function(){
+      hideHand(); hideBlush(); stopHearts();
       actEl.classList.remove('pet-nuzzle','pet-reach');
       actEl.style.transform='';
-      hideHand(); window.__setEyesClosed(false); stopAction();
-    }, 3800);
+      window.__setEyesClosed(false); stopAction();
+    }, 4200);
   }
 
   /* ===== 新增：互动反应（打招呼 / 模式 / 送礼 / 犯困计时） ===== */
@@ -494,7 +518,7 @@ const CAKE_IMG = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIAAAACACAYAAADD
   let _nightHold = false;   // 夜间规则：true 时压制 5 分钟自动起身，保持困态
   let _nightTimer = null;   // 北京时间巡检定时器
   let _nightResleepTimer = null;   // 夜间送礼唤醒后，过一会儿自动睡回的定时器
-  let _transitioning=false, _sitEndTimer=null, _trT1=null, _trT2=null, _upT1=null, _upT2=null, _upT3=null, _upT4=null, _cuteEndTimer=null, _cutePhase2=null, _handEl=null;
+  let _transitioning=false, _sitEndTimer=null, _trT1=null, _trT2=null, _upT1=null, _upT2=null, _upT3=null, _upT4=null, _cuteEndTimer=null, _cutePhase2=null, _handEl=null, _heartTimer=null, _blushEl=null;
   let _dizzyAngryTimer=null, _angryIdleTimer=null;   // 坐地晕眩：5s后生气 / 生气后1分钟无操作回待机
   let _angrySeq=0;   // 坐地晕→生气→抱胸 序列 token：送礼/回待机时自增作废，避免链式回调误续播
   function scheduleSleepy(){
@@ -926,26 +950,49 @@ const CAKE_IMG = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIAAAACACAYAAADD
 
 </script>
 <style id="petHandStyle">
-  /* 撒娇/抚摸：头顶出现一只手，左右来回抚摸；桌宠随后主动蹭向手、闭眼享受 */
-  .pet-hand{ position:absolute; left:50%; top:8px; width:64px; height:64px; margin-left:-32px;
-    pointer-events:none; z-index:60; transform-origin:50% 90%; }
+  /* 撒娇/抚摸（可爱版）：圆润的手在头顶轻柔 rua，桌宠闭眼享受、脸颊泛红、头顶飘爱心 */
+  .pet-hand{ position:absolute; left:50%; top:2px; width:66px; height:66px; margin-left:-33px;
+    pointer-events:none; z-index:60; transform-origin:50% 92%; }
   .pet-hand .ph-in{ display:block; opacity:0;
-    animation:phIn .32s ease-out forwards, phStroke 1.15s ease-in-out .32s infinite; }
-  .pet-hand svg{ display:block; width:64px; height:64px; overflow:visible;
-    filter:drop-shadow(0 3px 3px rgba(20,45,90,.22)); }
-  @keyframes phIn{ from{ opacity:0; transform:translateY(-16px); } to{ opacity:1; transform:translateY(0); } }
-  @keyframes phStroke{ 0%{ transform:translateX(-13px) rotate(-4deg);} 50%{ transform:translateX(13px) rotate(4deg);} 100%{ transform:translateX(-13px) rotate(-4deg);} }
-  /* 阶段1：桌宠抬头看手、略前倾（期待被摸） */
-  .pet-reach{ animation:petReach 1.4s ease-in-out forwards; transform-origin:50% 100%; }
-  @keyframes petReach{ 0%{ transform:translateY(0) rotate(0); } 100%{ transform:translateY(-4px) rotate(2deg); } }
-  /* 阶段2：闭眼、主动蹭向手（向上贴合并左右轻蹭），放松享受 */
-  .pet-nuzzle{ animation:petNuzzle 1.5s ease-in-out infinite; transform-origin:50% 100%; }
+    animation:phIn .35s ease-out forwards, phStroke 1.5s ease-in-out .35s infinite; }
+  .pet-hand svg{ display:block; width:66px; height:66px; overflow:visible;
+    filter:drop-shadow(0 3px 4px rgba(150,90,120,.22)); }
+  @keyframes phIn{ from{ opacity:0; transform:translateY(-18px) scale(.92); } to{ opacity:1; transform:translateY(0) scale(1); } }
+  /* 柔和抚摸：小幅左右 + 轻上下，像 rua 猫头 */
+  @keyframes phStroke{
+    0%   { transform:translateX(-8px) translateY(0)   rotate(-6deg); }
+    25%  { transform:translateX(0)    translateY(3px) rotate(0deg); }
+    50%  { transform:translateX(8px)  translateY(0)   rotate(6deg); }
+    75%  { transform:translateX(0)    translateY(3px) rotate(0deg); }
+    100% { transform:translateX(-8px) translateY(0)   rotate(-6deg); }
+  }
+  /* 阶段1：桌宠轻轻抬头、期待被摸 */
+  .pet-reach{ animation:petReach 1.3s ease-in-out forwards; transform-origin:50% 100%; }
+  @keyframes petReach{ 0%{ transform:translateY(0) rotate(0); } 100%{ transform:translateY(-3px) rotate(1.5deg); } }
+  /* 阶段2：闭眼、主动轻轻蹭向手，放松享受（幅度小、柔） */
+  .pet-nuzzle{ animation:petNuzzle 1.7s ease-in-out infinite; transform-origin:50% 100%; }
   @keyframes petNuzzle{
-    0%   { transform:translateY(-4px) rotate(0deg); }
-    22%  { transform:translateY(-8px) rotate(-6deg); }
-    48%  { transform:translateY(-5px) rotate(6deg); }
-    72%  { transform:translateY(-8px) rotate(-6deg); }
-    100% { transform:translateY(-6px) rotate(4deg); }
+    0%   { transform:translateY(-3px) rotate(0deg); }
+    25%  { transform:translateY(-6px) rotate(-3.5deg); }
+    50%  { transform:translateY(-3px) rotate(3.5deg); }
+    75%  { transform:translateY(-6px) rotate(-3.5deg); }
+    100% { transform:translateY(-5px) rotate(2.5deg); }
+  }
+  /* 脸颊腮红（按宠物容器比例定位，必要时可微调 top/left） */
+  .pet-blush{ position:absolute; inset:0; pointer-events:none; z-index:55; opacity:0; transition:opacity .35s ease; }
+  .pet-blush.on{ opacity:1; }
+  .pet-blush .b{ position:absolute; width:30px; height:20px; border-radius:50%;
+    background:radial-gradient(circle at 50% 45%, rgba(255,118,148,.78), rgba(255,150,170,.30) 68%, rgba(255,150,170,0) 100%); }
+  .pet-blush .b1{ left:46px;  top:120px; }
+  .pet-blush .b2{ left:144px; top:120px; }
+  /* 头顶飘出的小爱心 */
+  .pet-heart{ position:absolute; left:50%; top:4px; pointer-events:none; z-index:58;
+    font-size:18px; line-height:1; color:#ff7ea6; transform:translateX(-50%); will-change:transform,opacity;
+    animation:petHeart 1.7s ease-out forwards; text-shadow:0 1px 2px rgba(200,60,110,.35); }
+  @keyframes petHeart{
+    0%   { opacity:0; transform:translate(-50%,0)        scale(.5); }
+    18%  { opacity:1; transform:translate(-50%,-12px)    scale(1); }
+    100% { opacity:0; transform:translate(calc(-50% + var(--dx,0px)),-70px) scale(.85); }
   }
 </style>
 </body>
