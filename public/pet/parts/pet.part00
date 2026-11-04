@@ -178,7 +178,7 @@
 <div id="panel">
     <button data-act="wave">👋 打招呼</button>
     <button data-act="heart">💗 比心</button>
-    <button data-act="cute">🥰 撒娇</button>
+    <button data-act="cute">🙈 害羞</button>
     <button data-act="angry">😡 生气</button>
     <button data-act="sleepy">😪 犯困</button>
     <button data-act="sitSleepy">🪑 坐下困</button>
