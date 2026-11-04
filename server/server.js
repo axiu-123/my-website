@@ -8,6 +8,7 @@ const translateRouter = require('./routes/translate');
 const chatRouter = require('./routes/chat');
 const musicRouter = require('./routes/music');
 const composeRouter = require('./routes/compose');
+const petllmRouter = require('./routes/petllm');
 
 const PUBLIC_DIR = path.join(__dirname, '..', 'public');
 
@@ -36,6 +37,7 @@ app.use('/api/translate', translateRouter);
 app.use('/api/chat', chatRouter);
 app.use('/api/music', musicRouter);
 app.use('/api/compose', composeRouter);
+app.use('/api/pet/llm', petllmRouter);
 
 // 健康检查
 app.get('/api/health', (req, res) => {
