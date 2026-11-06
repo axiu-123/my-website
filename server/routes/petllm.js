@@ -7,10 +7,13 @@ const https = require('https');
 // 代理「用户自带 Key」的大模型请求：服务端不持有/不支付任何 token，仅做转发，避免浏览器侧 CORS。
 function proxy(body) {
   return new Promise((resolve, reject) => {
+    const temp = Number(body.temperature);
+    const maxTokens = Number(body.max_tokens);
     const payload = JSON.stringify({
       model: body.model || 'deepseek-chat',
       messages: body.messages || [],
-      temperature: 0.9,
+      temperature: Number.isFinite(temp) ? Math.min(2, Math.max(0, temp)) : 0.9,
+      max_tokens: Number.isFinite(maxTokens) ? Math.min(4096, Math.max(1, Math.floor(maxTokens))) : 320,
       stream: false,
     });
     let url;
@@ -52,17 +55,17 @@ function proxy(body) {
   });
 }
 
-// POST /api/pet/llm  body: { key, baseUrl, model, messages }
+// POST /api/pet/llm  body: { key, baseUrl, model, messages, temperature, max_tokens }
 router.post('/', async (req, res) => {
   try {
-    const { key, baseUrl, model, messages } = req.body || {};
+    const { key, baseUrl, model, messages, temperature, max_tokens } = req.body || {};
     if (!key) {
       return res.status(400).json({ error: '未提供 API Key（请在桌宠设置里填写你自己的 Key）' });
     }
     if (!Array.isArray(messages) || !messages.length) {
       return res.status(400).json({ error: '缺少对话内容' });
     }
-    const text = await proxy({ key, baseUrl, model, messages });
+    const text = await proxy({ key, baseUrl, model, messages, temperature, max_tokens });
     res.json({ reply: text });
   } catch (e) {
     res.status(502).json({ error: '调用大模型失败: ' + e.message });
