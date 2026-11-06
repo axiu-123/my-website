@@ -22,7 +22,7 @@ import urllib.request
 
 REPO = "axiu-123/my-website"
 BRANCH = "main"
-MESSAGE = "feat(pet): 桌面版 v2026.11.06.2 新增陪工作监测（默认关闭、仅桌面版），更新分发包与说明"
+MESSAGE = "fix(pet): v2026.11.06.3 陪工作配件按立绘比例缩小（眼镜贴合脸部、本子笔拿在手上）"
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 ZIP = r"C:/Users/a1541/Desktop/aaa/desktop/WhaleGirlPet-win32-x64.zip"
 MANIFEST_LOCAL = r"C:/Users/a1541/Desktop/aaa/desktop/download_manifest.json"
@@ -51,17 +51,26 @@ def gh(path, token, method="GET", data=None, timeout=600):
         body = json.dumps(data, ensure_ascii=False).encode("utf-8")
         req.add_header("Content-Type", "application/json")
     last = None
-    for attempt in range(3):
+    # 5MB blob 上传偶发 TLS 连接被本机中断（Errno 10053）或 5xx，统一退避重试
+    for attempt in range(5):
         try:
             with urllib.request.urlopen(req, body, timeout=timeout) as r:
                 txt = r.read().decode("utf-8", "ignore")
                 return json.loads(txt) if txt else {}
         except urllib.error.HTTPError as e:
             last = ApiError(e.code, e.read().decode("utf-8", "ignore")[:300])
-            if e.code in (500, 502, 503) and attempt < 2:
+            if e.code in (429, 500, 502, 503, 504) and attempt < 4:
+                print("  ! HTTP %d，%d 秒后重试" % (e.code, 3 * (attempt + 1)), flush=True)
                 time.sleep(3 * (attempt + 1))
                 continue
             raise last
+        except (urllib.error.URLError, OSError) as e:
+            last = e
+            if attempt < 4:
+                print("  ! 连接中断（%s），%d 秒后重试" % (str(e)[:60], 3 * (attempt + 1)), flush=True)
+                time.sleep(3 * (attempt + 1))
+                continue
+            raise
     raise last
 
 
