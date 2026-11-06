@@ -22,7 +22,7 @@ import urllib.request
 
 REPO = "axiu-123/my-website"
 BRANCH = "main"
-MESSAGE = "fix(pet): v2026.11.06.3 陪工作配件按立绘比例缩小（眼镜贴合脸部、本子笔拿在手上）"
+MESSAGE = "fix(pet): v2026.11.06.4 陪工作去掉眼镜，只保留手边小本子和笔"
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 ZIP = r"C:/Users/a1541/Desktop/aaa/desktop/WhaleGirlPet-win32-x64.zip"
 MANIFEST_LOCAL = r"C:/Users/a1541/Desktop/aaa/desktop/download_manifest.json"
