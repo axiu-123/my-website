@@ -1,0 +1,13 @@
+{
+  "version": "2026.11.06",
+  "built": "2026-11-06",
+  "platform": "Windows 10 / 11 x64",
+  "filename": "WhaleGirlPet-win32-x64.zip",
+  "size": 208706985,
+  "sha256": "39207322406cc63a707663e5996b0890185098aa854a23e49424aac5c207ae09",
+  "md5": "de6b5a05eb9c7a32342b4f50f6c74b46",
+  "parts": 40,
+  "chunk": 5242880,
+  "width": 2,
+  "partPrefix": "pkg.part"
+}
