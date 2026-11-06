@@ -4,6 +4,18 @@ const express = require('express');
 const router = express.Router();
 const https = require('https');
 
+// 桌宠页是把分片拼成 blob: 文档再导航过去的，部分浏览器会把它当成 null origin
+// 并对 application/json 的 POST 发预检。这里显式放行：Key 完全由用户自己提供，
+// 服务端不保存也不代付，开放 CORS 不会泄露任何站内凭据。
+router.use((req, res, next) => {
+  res.set('Access-Control-Allow-Origin', req.headers.origin || '*');
+  res.set('Access-Control-Allow-Methods', 'POST, OPTIONS');
+  res.set('Access-Control-Allow-Headers', 'Content-Type');
+  res.set('Vary', 'Origin');
+  if (req.method === 'OPTIONS') return res.sendStatus(204);
+  next();
+});
+
 // 代理「用户自带 Key」的大模型请求：服务端不持有/不支付任何 token，仅做转发，避免浏览器侧 CORS。
 function proxy(body) {
   return new Promise((resolve, reject) => {
