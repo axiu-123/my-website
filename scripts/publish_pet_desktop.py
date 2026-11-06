@@ -22,7 +22,7 @@ import urllib.request
 
 REPO = "axiu-123/my-website"
 BRANCH = "main"
-MESSAGE = "feat(pet): 网站提供 Windows 桌面版下载（站内流式合并分片 + 下载说明页）"
+MESSAGE = "feat(pet): 桌面版 v2026.11.06.2 新增陪工作监测（默认关闭、仅桌面版），更新分发包与说明"
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 ZIP = r"C:/Users/a1541/Desktop/aaa/desktop/WhaleGirlPet-win32-x64.zip"
 MANIFEST_LOCAL = r"C:/Users/a1541/Desktop/aaa/desktop/download_manifest.json"

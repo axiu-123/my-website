@@ -63,7 +63,8 @@
         <tr><td>出现位置</td><td>浏览器标签页</td><td>桌面上，透明置顶</td></tr>
         <tr><td>鼠标穿透 / 不挡操作</td><td>—</td><td>✓</td></tr>
         <tr><td>开机自启 / 多显示器 / 透明度</td><td>—</td><td>✓</td></tr>
-        <tr><td>安装</td><td>打开网页即可</td><td>下载解压一次（约 199 MB）</td></tr>
+        <tr><td>陪工作监测（可选）</td><td>—</td><td>✓ 默认关闭，仅桌面版</td></tr>
+        <tr><td>安装</td><td>打开网页即可</td><td>下载解压一次（<span id="sizeHint">约 200 MB</span>）</td></tr>
         <tr><td>动画与交互</td><td colspan="2">完全相同：单击打招呼 · 双击摸头撒娇 · 拖拽移动 · 坐下困摇尾巴 · 右键设置 / 聊天 / 自接 API</td></tr>
       </tbody>
     </table>
@@ -74,6 +75,7 @@
     <p class="desc" style="margin-bottom:6px">· 整个文件夹要放在一起，<b>不能只把 exe 单独拷到桌面</b>，它依赖同目录的运行库与动画文件。</p>
     <p class="desc" style="margin-bottom:6px">· 网页版和桌面版的设置不互通：在网页版填过 API Key 的话，要在桌面版「右键 → 桌宠设置」里再填一次。不填也能离线陪聊。</p>
     <p class="desc" style="margin-bottom:6px">· 右键桌宠 →「桌宠设置」可切换桌面漫游 / 小窗口形态、选显示器、调不透明度、开机自启。</p>
+    <p class="desc" style="margin-bottom:6px">· <b>「陪工作监测」默认关闭</b>：在右下角托盘右键菜单里开启。开启后只读取最前面窗口的标题、程序名和键鼠空闲时间，<b>不截屏、不读取窗口内容、不联网、不上传、不消耗 API 额度</b>；检测到你开始工作，它会说「本鱼来陪主人工作」、戴上黑框大眼镜并拿出本子和笔，<b>一直陪到你结束工作才收起</b>。随时可在托盘关掉。</p>
     <p class="desc" style="margin-bottom:6px">· 卸载：托盘右键「退出」，然后直接删除整个文件夹即可，不留注册表项。</p>
     <p class="desc" style="margin-bottom:6px">· 若透明窗口黑屏或闪烁，用命令行启动：<code>WhaleGirlPet.exe --compat</code>。</p>
     <p class="desc">· 程序不上传你的数据；API Key 只保存在本机，网站服务端不保存也不代付；动画素材全部内置，断网也能玩。</p>
@@ -81,8 +83,9 @@
 
   <div class="panel">
     <h2>常见问题</h2>
-    <details><summary>为什么有 199 MB？</summary><p>桌面版内置了一整套 Chromium 运行时（约 240 MB，压缩后约 100 MB）才能画透明窗口，另外还有 63 MB 的手绘逐帧动画素材（全部内联在页面里，所以离线也能动）。压缩包已排除了自检文件。</p></details>
-    <details><summary>安全吗？能校验文件吗？</summary><p>这是本站作者自己打包的绿色版，没有第三方安装器、不写注册表、不联网上传数据；未签名所以 Windows 会提示一次。下载后可用下面的 SHA-256 校验；解压后文件夹里有 README.txt 说明。</p></details>
+    <details><summary>为什么下载包接近 200 MB？</summary><p>桌面版内置了一整套 Chromium 运行时（约 240 MB，压缩后约 100 MB）才能画透明窗口，另外还有 63 MB 的手绘逐帧动画素材（全部内联在页面里，所以离线也能动）。压缩包已排除了自检文件。</p></details>
+    <details><summary>「陪工作监测」会看到我的屏幕吗？</summary><p>不会。它只调用 Windows 的前台窗口信息接口，拿三样东西：窗口标题、程序名、你多久没碰键鼠，用来判断「是不是在工作」。不截图、不录屏、不读取文件内容、不联网，也不需要 API Key。默认关闭，首次开启会先弹一次说明；关掉后程序完全不采样。网页版没有也不可能有这个功能——浏览器不允许网页静默读取用户的桌面状态。</p></details>
+    <details><summary>安全吗？能校验文件吗？</summary><p>这是本站作者自己打包的绿色版，没有第三方安装器、不写注册表、不会自动联网上传你的数据；未签名所以 Windows 会提示一次。下载后可用下面的 SHA-256 校验；解压后文件夹里有 README.txt 说明。</p></details>
     <details><summary>Mac / Linux / 手机能用吗？</summary><p>桌面版目前只提供 Windows 10/11 64 位。其它系统请直接用网页版，交互与动画完全一致，只是不能悬浮在桌面上。</p></details>
     <p class="note">SHA-256：<code class="sha" id="sha">读取中…</code></p>
   </div>
@@ -96,9 +99,11 @@ renderNav('pet');
 fetch('/pet/downloads/manifest.json')
   .then(function (r) { if (!r.ok) throw new Error('manifest ' + r.status); return r.json(); })
   .then(function (m) {
+    var mb = (m.size / 1048576).toFixed(1);
     document.getElementById('meta').innerHTML =
-      '版本 <b>' + m.version + '</b> · ' + (m.size / 1048576).toFixed(1) + ' MB · ' +
+      '版本 <b>' + m.version + '</b> · ' + mb + ' MB · ' +
       m.platform + ' · 构建于 ' + m.built;
+    document.getElementById('sizeHint').textContent = '约 ' + Math.round(m.size / 1048576) + ' MB';
     document.getElementById('sha').textContent = m.sha256;
   })
   .catch(function () {
