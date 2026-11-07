@@ -1,1 +1,60 @@
-<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>2.5D 桌宠</title><style>html,body{margin:0;height:100%;background:#f5f5f7;font-family:-apple-system,Segoe UI,sans-serif}#m{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;color:#999;font-size:14px}</style></head><body><div id="m">2.5D 桌宠加载中…</div><script>const N=13;const W=2;(async()=>{try{const buf=[];for(let i=0;i<N;i++){const u='parts/pet.part'+String(i).padStart(W,'0');const r=await fetch(u);if(!r.ok)throw new Error(u+' '+r.status);buf.push(await r.arrayBuffer());}const blob=new Blob(buf,{type:'text/html'});location.href=URL.createObjectURL(blob);}catch(e){document.getElementById('m').textContent='桌宠加载失败：'+e.message;}})();</script></body></html>
+<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>2.5D 桌宠</title><style>html,body{margin:0;height:100%;background:#f5f5f7;font-family:-apple-system,Segoe UI,sans-serif}#m{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;color:#999;font-size:14px}</style></head><body><div id="m">2.5D 桌宠加载中…</div><script>
+/* /pet/ 加载器：把 13 个分片拼回完整 2.5D 桌宠 HTML，并在运行时注入
+   「陪工作 / 工作状态检测」脚本。成品 HTML 63MB 保持零改动、无需重切分片。
+   注入点：最后一个分片里的 </body> 之前（按字节查找，不解码整份 HTML，
+   避免分片边界切断 UTF-8 汉字）。 */
+const N = 13, W = 2;
+const m = document.getElementById('m');
+(async () => {
+  try {
+    const buf = [];
+    for (let i = 0; i < N; i++) {
+      const u = 'parts/pet.part' + String(i).padStart(W, '0');
+      const r = await fetch(u);
+      if (!r.ok) throw new Error(u + ' ' + r.status);
+      buf.push(await r.arrayBuffer());
+    }
+
+    /* 检测脚本拉取失败不阻断桌宠本体 */
+    let wd = '';
+    try {
+      const wr = await fetch('/pet/workdetect.js', { cache: 'no-cache' });
+      if (wr.ok) wd = await wr.text();
+      else console.warn('[pet] workdetect.js ' + wr.status);
+    } catch (e) { console.warn('[pet] workdetect.js 拉取失败', e); }
+
+    const enc = new TextEncoder();
+    const tail = new Uint8Array(buf[N - 1]);
+    let chunks = buf.slice(0, N - 1);
+
+    if (wd) {
+      /* blob: URL 会丢掉原地址上的 ?wb=0 等参数，先透传 */
+      const boot = '<script>window.__WD_PARAMS=' + JSON.stringify(location.search) + ';<\/script>\n';
+      /* 防止脚本正文里出现脚本结束标签导致提前闭合 */
+      const safe = wd.replace(/<\/script/gi, '<\\/script');
+      const inject = '\n' + boot + '<script>\n' + safe + '\n<\/script>\n';
+      const scriptBytes = enc.encode(inject);
+
+      /* 从尾部倒着找最后一个 </body> */
+      const closeBytes = enc.encode('</body>');
+      let at = -1;
+      for (let i = tail.length - closeBytes.length; i >= 0; i--) {
+        let hit = true;
+        for (let j = 0; j < closeBytes.length; j++) {
+          if (tail[i + j] !== closeBytes[j]) { hit = false; break; }
+        }
+        if (hit) { at = i; break; }
+      }
+      if (at >= 0) chunks = chunks.concat([tail.subarray(0, at), scriptBytes, tail.subarray(at)]);
+      else chunks = chunks.concat([tail, enc.encode('\n' + inject)]);
+    } else {
+      chunks.push(tail);
+    }
+
+    const blob = new Blob(chunks, { type: 'text/html' });
+    location.href = URL.createObjectURL(blob);
+  } catch (e) {
+    m.textContent = '桌宠加载失败：' + e.message;
+  }
+})();
+</script></body></html>
