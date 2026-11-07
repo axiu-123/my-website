@@ -22,7 +22,7 @@ import urllib.request
 
 REPO = "axiu-123/my-website"
 BRANCH = "main"
-MESSAGE = "fix(pet): v2026.11.06.6 陪工作加回贴合眼睛的细边圆框智慧眼镜"
+MESSAGE = "fix(pet): v2026.11.06.7 陪工作去掉眼镜、表情改为严肃、手指重画更高清"
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 ZIP = r"C:/Users/a1541/Desktop/aaa/desktop/WhaleGirlPet-win32-x64.zip"
 MANIFEST_LOCAL = r"C:/Users/a1541/Desktop/aaa/desktop/download_manifest.json"
