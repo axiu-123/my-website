@@ -61,6 +61,11 @@
     '.wb-run #wbStationery { animation:wbBringIn .88s cubic-bezier(.2,1.25,.35,1) .55s both; }',
     '.wb-out #wbStationery { animation:wbBringOut .4s ease-in both; }',
     '.wb-run .wb-breathe { animation:wbBreathe 3.6s ease-in-out 1.55s infinite; }',
+    /* 终态兜底：某些嵌入式 / 被遮挡窗口会冻结 CSS 动画时间轴（currentTime 停在 0），
+       动画时长走完后用 !important 钉死最终状态，保证造型一定完整显示。
+       退出前会移除 wb-settled，让收起动画照常播放。 */
+    '.wb-run.wb-settled #wbMouth { opacity:1 !important; }',
+    '.wb-run.wb-settled #wbStationery { opacity:1 !important; transform:none !important; }',
     '@keyframes wbMouthIn { 0%{opacity:0} 100%{opacity:1} }',
     '@keyframes wbMouthOut { from{opacity:1} to{opacity:0} }',
     '@keyframes wbBringIn {',
@@ -142,24 +147,30 @@
   }
 
   /* ---------------- 状态机 ---------------- */
-  var state = false, outTimer = null, enterTimer = null;
+  var state = false, outTimer = null, enterTimer = null, settleTimer = null;
 
   function enter() {
     if (state) return;
     state = true;
     clearTimeout(outTimer);
+    clearTimeout(settleTimer);
     document.body.classList.add('wb-on');
-    layer.classList.remove('wb-out', 'wb-run');
+    layer.classList.remove('wb-out', 'wb-run', 'wb-settled');
     layer.classList.add('wb-show');
     void layer.offsetWidth;                 // 强制回流，保证动画可重播
     layer.classList.add('wb-run');
+    settleTimer = setTimeout(function () {
+      settleTimer = null;
+      if (state) layer.classList.add('wb-settled');
+    }, 1600);
     say('本鱼来陪主人工作');
   }
 
   function exit() {
     if (!state) return;
     state = false;
-    layer.classList.remove('wb-run');
+    clearTimeout(settleTimer); settleTimer = null;
+    layer.classList.remove('wb-settled', 'wb-run');
     layer.classList.add('wb-out');
     outTimer = setTimeout(function () {
       layer.classList.remove('wb-show', 'wb-out');
@@ -246,6 +257,7 @@
         engine: 'page-activity',
         enabled: enabled,
         active: state,
+        settled: layer.classList.contains('wb-settled'),
         lastActive: lastActive,
         visibility: document.visibilityState,
         petFound: !!pet,
