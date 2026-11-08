@@ -22,7 +22,7 @@ import urllib.request
 
 REPO = "axiu-123/my-website"
 BRANCH = "main"
-MESSAGE = "fix(pet): v2026.11.06.9 陪工作去掉假手、本子笔放回手边，眼睛恢复睁眼+眨眼"
+MESSAGE = "feat(pet-desktop): v2026.11.08.1 置顶/快捷键/软隐藏/滚轮焦点修复，消除下层视频画面冻结"
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 ZIP = r"C:/Users/a1541/Desktop/aaa/desktop/WhaleGirlPet-win32-x64.zip"
 MANIFEST_LOCAL = r"C:/Users/a1541/Desktop/aaa/desktop/download_manifest.json"
