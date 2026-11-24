@@ -115,6 +115,14 @@ app.get('/pet/download', async (req, res) => {
   }
 });
 
+// 桌宠 13 个分片是不可变内容，单独挂一年强缓存，让 Cloudflare 边缘节点缓存，
+// 避免每次都回 Render 源站（实测源站每片 5MB 要 30-40 秒）。
+app.use('/pet/parts', express.static(path.join(PUBLIC_DIR, 'pet', 'parts'), {
+  maxAge: '1y',
+  immutable: true,
+  index: false,
+}));
+
 app.use(express.static(PUBLIC_DIR));
 
 // API 路由

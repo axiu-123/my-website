@@ -1,7 +1,7 @@
 {
   "name": "aggregate-site",
   "version": "1.0.0",
-  "description": "多功能聚合网站：互译、音乐解析、文件整理/查重、AI聊天、桌宠、AI作曲",
+  "description": "多功能聚合网站：互译、音乐解析、文件整理/查重、桌宠",
   "type": "commonjs",
   "main": "server/server.js",
   "scripts": {
