@@ -6,9 +6,7 @@ const express = require('express');
 const config = require('./config');
 
 const translateRouter = require('./routes/translate');
-const chatRouter = require('./routes/chat');
 const musicRouter = require('./routes/music');
-const composeRouter = require('./routes/compose');
 const petllmRouter = require('./routes/petllm');
 
 const PUBLIC_DIR = path.join(__dirname, '..', 'public');
@@ -26,7 +24,7 @@ app.use((req, res, next) => {
 });
 
 // 独立功能页路由（支持 /feature 与 /feature/ 两种写法）
-app.get(/^\/(home|translate|music|organize|dedup|chat|pet|compose)\/?$/, (req, res) => {
+app.get(/^\/(home|translate|music|organize|dedup|pet)\/?$/, (req, res) => {
   const seg = req.path.replace(/^\/|\/$/g, '');
   res.sendFile(path.join(PUBLIC_DIR, seg, 'index.html'));
 });
@@ -121,9 +119,7 @@ app.use(express.static(PUBLIC_DIR));
 
 // API 路由
 app.use('/api/translate', translateRouter);
-app.use('/api/chat', chatRouter);
 app.use('/api/music', musicRouter);
-app.use('/api/compose', composeRouter);
 app.use('/api/pet/llm', petllmRouter);
 
 // 健康检查
@@ -143,7 +139,4 @@ app.listen(PORT, config.host, () => {
   console.log(` 本地访问: http://localhost:${PORT}`);
   console.log(` 首页:     http://localhost:${PORT}/home/`);
   console.log(`========================================\n`);
-  if (!config.deepseek.apiKey) {
-    console.log('[提示] 未检测到 DEEPSEEK_API_KEY，AI 聊天将使用本地情绪支持回退引擎。');
-  }
 });

@@ -13,7 +13,7 @@ services:
       - key: NODE_ENV
         value: production
       # 注意：不要写死 PORT。Render 会注入 PORT 环境变量，服务端已读取 process.env.PORT。
-      # 可选：填入后 AI 聊天使用真实 DeepSeek 模型，否则走本地情绪支持回退
+      # 可选：填入后 LLM 翻译可使用 DeepSeek 模型（桌面宠宠云端推理也可复用）
       - key: DEEPSEEK_API_KEY
         sync: false      # 部署时在 Render 后台手动填写，不写入代码
-      # 可选：音乐解析源 / 作曲服务（见 .env.example）
+      # 可选：音乐解析源等（见 .env.example）

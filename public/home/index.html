@@ -11,7 +11,7 @@
 <main>
   <div class="hero">
     <h1>多功能聚合站 🛠️</h1>
-    <p>一个网站，七大功能，每个功能都有独立可访问链接。翻译、音乐解析、文件整理、文件查重、AI 聊天、桌面宠宠、AI 作曲，全部集成于此。</p>
+    <p>一个网站，五大功能，每个功能都有独立可访问链接。翻译、音乐解析、文件整理、文件查重、桌面宠宠，全部集成于此。</p>
   </div>
 
   <div class="grid">
@@ -39,12 +39,6 @@
       <p>扫描目录，找出并用哈希标记重复文件。</p>
       <div class="goto">前往 →</div>
     </a>
-    <a class="card" href="/chat/">
-      <div class="ic">💬</div>
-      <h3>AI 聊天</h3>
-      <p>既解答问题，也提供情绪价值的心灵伙伴。</p>
-      <div class="goto">前往 →</div>
-    </a>
     <div class="card">
       <div class="ic">🐾</div>
       <h3>桌面宠宠</h3>
@@ -52,12 +46,6 @@
       <div class="goto"><a href="/pet/" style="color:inherit;text-decoration:none">打开网页版 →</a></div>
       <div class="goto" style="margin-top:6px"><a href="/pet/desktop.html" style="color:inherit;text-decoration:none">⬇ 下载到桌面（Windows）→</a></div>
     </div>
-    <a class="card" href="/compose/">
-      <div class="ic">🎼</div>
-      <h3>AI 智能作曲</h3>
-      <p>参考 Suno 的本地生成式作曲，输入风格即出旋律。</p>
-      <div class="goto">前往 →</div>
-    </a>
   </div>
 
   <div class="panel" style="margin-top:30px;">
@@ -70,13 +58,11 @@
         <tr><td>音乐解析</td><td><a href="/music/">/music/</a></td></tr>
         <tr><td>文件整理</td><td><a href="/organize/">/organize/</a></td></tr>
         <tr><td>文件查重</td><td><a href="/dedup/">/dedup/</a></td></tr>
-        <tr><td>AI 聊天</td><td><a href="/chat/">/chat/</a></td></tr>
         <tr><td>桌面宠宠</td><td><a href="/pet/">/pet/</a></td></tr>
         <tr><td>桌宠桌面版下载</td><td><a href="/pet/desktop.html">/pet/desktop.html</a></td></tr>
-        <tr><td>AI 作曲</td><td><a href="/compose/">/compose/</a></td></tr>
       </tbody>
     </table>
-    <p class="note">提示：音乐解析、AI 聊天等依赖外部服务的功能，可在项目根目录 <code>.env</code> 中配置 API 密钥后获得完整体验；未配置时使用内置回退方案，保证网站始终可用。</p>
+    <p class="note">提示：翻译、音乐解析等依赖外部服务的功能，可在项目根目录 <code>.env</code> 中配置 API 密钥后获得完整体验；未配置时使用内置回退方案，保证网站始终可用。</p>
   </div>
 </main>
 <footer class="foot">多功能聚合站 · 本地可运行 · Node + Express</footer>

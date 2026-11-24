@@ -28,7 +28,7 @@ const config = {
   port: Number(process.env.PORT) || 3000,
   host: process.env.HOST || '0.0.0.0',
 
-  // AI 聊天 / 桌宠"推理"使用的模型服务（默认 DeepSeek 开放平台）
+  // LLM 翻译 / 桌宠推理使用的模型服务（默认 DeepSeek 开放平台）
   deepseek: {
     apiKey: process.env.DEEPSEEK_API_KEY || '',
     baseUrl: process.env.DEEPSEEK_BASE_URL || 'https://api.deepseek.com/v1',
@@ -48,12 +48,6 @@ const config = {
       'https://api.imjad.cn/qqmusic/',
     // 解析后音频的直连下载是否需要本服务做代理（解决跨域/防盗链）
     proxyDownload: process.env.MUSIC_PROXY_DOWNLOAD !== 'false',
-  },
-
-  // AI 作曲（Suno 类服务，可选；未配置则使用本地生成式作曲）
-  compose: {
-    apiBase: process.env.COMPOSE_API_BASE || '',
-    apiKey: process.env.COMPOSE_API_KEY || '',
   },
 
   // 翻译服务：多源自动兜底（详见 routes/translate.js 顶部说明）

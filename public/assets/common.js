@@ -5,9 +5,7 @@ const FEATURES = [
   { key: 'music', label: '音乐解析', href: '/music/' },
   { key: 'organize', label: '文件整理', href: '/organize/' },
   { key: 'dedup', label: '文件查重', href: '/dedup/' },
-  { key: 'chat', label: 'AI 聊天', href: '/chat/' },
   { key: 'pet', label: '桌面宠宠', href: '/pet/' },
-  { key: 'compose', label: 'AI 作曲', href: '/compose/' },
 ];
 
 function renderNav(active) {
