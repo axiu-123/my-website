@@ -1,1 +1,48 @@
-<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>2.5D 桌宠</title><style>html,body{margin:0;height:100%;background:#f5f5f7;font-family:-apple-system,Segoe UI,sans-serif}#m{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;color:#999;font-size:14px}</style></head><body><div id="m">2.5D 桌宠加载中…</div><script>const N=13;const W=2;(async()=>{try{const buf=[];for(let i=0;i<N;i++){const u='parts/pet.part'+String(i).padStart(W,'0');const r=await fetch(u);if(!r.ok)throw new Error(u+' '+r.status);buf.push(await r.arrayBuffer());}const blob=new Blob(buf,{type:'text/html'});location.href=URL.createObjectURL(blob);}catch(e){document.getElementById('m').textContent='桌宠加载失败：'+e.message;}})();</script></body></html>
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>2.5D 桌宠</title>
+<style>
+html,body{margin:0;height:100%;background:#f5f5f7;font-family:-apple-system,Segoe UI,sans-serif}
+#m{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#666;font-size:14px;gap:12px}
+#bar{width:min(320px,70vw);height:6px;background:#e5e5ea;border-radius:3px;overflow:hidden}
+#fill{height:100%;width:0;background:#4b8cff;transition:width .2s}
+</style>
+</head>
+<body>
+<div id="m">
+  <div id="t">2.5D 桌宠加载中…</div>
+  <div id="bar"><div id="fill"></div></div>
+</div>
+<script>
+(async () => {
+  const N = 13, W = 2;
+  const t = document.getElementById('t');
+  const fill = document.getElementById('fill');
+  let done = 0;
+  const tasks = Array.from({length: N}, (_, i) => {
+    const u = '/pet/parts/pet.part' + String(i).padStart(W, '0');
+    return fetch(u).then((r) => {
+      if (!r.ok) throw new Error(u + ' ' + r.status);
+      return r.arrayBuffer();
+    }).then((buf) => {
+      done += 1;
+      t.textContent = '桌宠加载中… ' + done + '/' + N;
+      fill.style.width = (done / N * 100) + '%';
+      return buf;
+    });
+  });
+  try {
+    const bufs = await Promise.all(tasks);
+    const blob = new Blob(bufs, {type: 'text/html'});
+    location.href = URL.createObjectURL(blob);
+  } catch (e) {
+    t.textContent = '桌宠加载失败：' + e.message;
+    document.getElementById('bar').style.display = 'none';
+  }
+})();
+</script>
+</body>
+</html>
