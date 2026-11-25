@@ -567,6 +567,12 @@ function hasKeyFor(name) {
   return true;
 }
 
+/* 无需密钥的公共源：作为配置的兜底，无论 TRANSLATE_PROVIDER_ORDER 怎么设，
+   都自动追加到末尾。这样即使线上只配了 baidu（额度用尽/故障时），
+   仍能自动降级到这些源，不必改 Render 后台环境变量。
+   顺序：bing（云主机最稳）→ google → google2 → simply → mymemory。 */
+const FREE_FALLBACKS = ['bing', 'google', 'google2', 'simply', 'mymemory'];
+
 function providerList() {
   const order = String(config.translate.providerOrder || '')
     .split(',')
@@ -575,8 +581,11 @@ function providerList() {
   const base = order.length
     ? order
     : ['deepl', 'llm', 'baidu', 'libre', 'bing', 'google', 'google2', 'simply', 'mymemory'];
+  // 把免费源追加到配置源后面并去重；配置里的顺序与优先级保持不变
+  const merged = base.slice();
+  for (const name of FREE_FALLBACKS) if (!merged.includes(name)) merged.push(name);
   // 未配置密钥的源直接跳过，避免无谓报错
-  return base.filter(hasKeyFor).map((name) => [name, PROVIDERS[name]]);
+  return merged.filter(hasKeyFor).map((name) => [name, PROVIDERS[name]]);
 }
 
 const cache = new Map();
@@ -638,8 +647,12 @@ router.get('/diagnose', async (req, res) => {
   const text = String(req.query.text || 'good morning');
   const from = String(req.query.from || 'en');
   const to = String(req.query.to || 'zh-CN');
+  // all=1：探测所有内置源（含免费兜底），用于评估各源在云主机上的实际可用性
+  const list = String(req.query.all || '') === '1'
+    ? Object.keys(PROVIDERS).filter(hasKeyFor).map((name) => [name, PROVIDERS[name]])
+    : providerList();
   const results = await Promise.all(
-    providerList().map(async ([name, fn]) => {
+    list.map(async ([name, fn]) => {
       const started = Date.now();
       try {
         const r = await fn(text, from, to);
@@ -650,7 +663,7 @@ router.get('/diagnose', async (req, res) => {
     })
   );
   res.json({
-    order: providerList().map(([n]) => n),
+    order: list.map(([n]) => n),
     deeplConfigured: !!config.translate.deeplKey,
     llmConfigured: !!config.deepseek.apiKey,
     results,
