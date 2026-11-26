@@ -64,10 +64,11 @@
     <p class="desc">只针对 Galgame / 视觉小说（有文字层的游戏）。3D 游戏没有可读取的文本层，本组件不支持。</p>
     <ol class="steps">
       <li><b>下载并解压</b>：上面两个都下载。把「安装包」解压到一个简单目录，如 <code>D:\LunaTranslator_x64</code>（别放 C:\Program Files，路径别带中文）。</li>
-      <li><b>放进配置脚本</b>：把「配置脚本」压缩包解开，将里面的 <code>一键玩Galgame.bat</code> 和 <code>galgame-translate.ps1</code> 两个文件，复制到第 1 步解压出的 LunaTranslator 目录里（和 <code>LunaTranslator.exe</code> 同一层）。</li>
-      <li><b>双击运行一次</b>：双击 <code>一键玩Galgame.bat</code>。它会自动关掉旧进程、备份原配置、开好网络服务（端口 2333）和 HOOK 模式，并重新启动 LunaTranslator。看到绿色 <b>SUCCESS</b> 就成了。</li>
-      <li><b>首次选一次文本行</b>（约 10 秒，仅此一次）：把你的 Galgame exe 拖进 LunaTranslator 窗口，让游戏显示两三句对话，弹出的「选择文本」窗口里点一下和画面一致的那一行。<b>选过一次就永久保存</b>，以后这一步免做。</li>
-      <li><b>以后开玩</b>：再双击那个 bat，它会自动打开游戏、加载已保存的 HOOK、开始翻译。回到桌宠按 <code>Ctrl+Alt+T</code>，译文就出现在字幕浮层上。</li>
+      <li><b>放进配置脚本</b>：把「配置脚本」压缩包解开，将里面<b>全部 4 个文件</b>（<code>一键玩Galgame.bat</code>、<code>galgame-translate.ps1</code>、<code>首次选文本助手.bat</code>、<code>select-text-helper.ps1</code>）复制到第 1 步解压出的 LunaTranslator 目录里（和 <code>LunaTranslator.exe</code> 同一层）。</li>
+      <li><b>双击运行一次</b>：双击 <code>一键玩Galgame.bat</code>。它会自动备份原配置、开好网络服务（端口 2333）和 HOOK 模式，并重新启动 LunaTranslator。看到绿色 <b>SUCCESS</b> 就成了。窗口里还会列出每款游戏的存档状态：<code>hook=0</code> 表示还没选过文本，<code>hook&gt;0</code> 表示已永久保存。</li>
+      <li><b>首次选一次文本行（有助手帮忙，仅此一次）</b>：把 Galgame exe 拖进 LunaTranslator 窗口，让游戏显示两三句对话，会弹出「选择文本」窗口。<b>保持那句台词在画面上</b>，双击 <code>首次选文本助手.bat</code> —— 它会读画面台词、自动填进选择窗口的搜索框，候选行立刻被过滤到只剩 1 行；你点那一行最左边的开关（蓝色圆点）即可。<b>选过一次就永久保存</b>，以后免做。</li>
+      <li><b>选完正常退出（关键）</b>：关掉选择窗口后，用托盘图标「退出」或点窗口 X <b>正常关闭</b> LunaTranslator —— 配置只在这个时候写盘。别用任务管理器强杀，否则刚选的文本会丢。</li>
+      <li><b>以后开玩</b>：再双击 <code>一键玩Galgame.bat</code>，它会自动打开游戏、加载已保存的 HOOK、开始翻译。回到桌宠按 <code>Ctrl+Alt+T</code>，译文就出现在字幕浮层上。</li>
     </ol>
   </div>
 
@@ -76,6 +77,8 @@
     <p class="kv">
       <b>Q：按了 Ctrl+Alt+T 提示连不上？</b><br>
       先看配置脚本是否跑出 SUCCESS；再看 LunaTranslator 是否还开着；端口若不是 2333，到桌宠设置面板最底部「🎮 游戏翻译（进阶）」里改。<br><br>
+      <b>Q：每次打开都还要选文本，和手动没区别？</b><br>
+      正常不会——选一次就永久生效。如果每次都要重选，多半是上次选完被<b>强杀了进程</b>，配置没来得及存盘。请用托盘「退出」正常关闭。运行 <code>一键玩Galgame.bat</code> 时会打印每款游戏的 <code>hook</code> 状态，看到 <code>hook&gt;0</code> 就说明已存好，以后全自动。<br><br>
       <b>Q：3D 游戏 / 《逃生》这类能翻吗？</b><br>
       不能。这类游戏字幕是画在画面上的文字，没有可读取的文本层，HOOK 抓不到。本组件只做 Galgame。<br><br>
       <b>Q：翻译质量不满意？</b><br>
@@ -84,10 +87,10 @@
   </div>
 
   <div class="ok" style="margin-top:18px;">
-    ✅ 隐私：配置脚本只改 LunaTranslator 自己的配置文件、只连本机 <code>127.0.0.1:2333</code>，不扫描全盘、不上传任何东西。桌宠本体不会因为你用了这个组件而增加对外请求。
+    ✅ 隐私：配置脚本只改 LunaTranslator 自己的配置文件、只连本机 <code>127.0.0.1:2333</code>，不扫描全盘、不上传任何东西。「首次选文本助手」截图后交给本机 LunaTranslator 自带的 OCR 识别（同一端口，不出网），识别完即丢弃。桌宠本体不会因为你用了这个组件而增加对外请求。
   </div>
   <div class="warn" style="margin-top:12px;">
-    ⚠️ 首次的「选文本行」无法自动化：不同游戏内存结构不同，LunaTranslator 没有任何按游戏自动勾选的机制，必须人工对照画面点一次（约 10 秒）。选过一次后永久保存，之后全程自动。
+    ⚠️ 关于「选文本行」：不同游戏内存结构不同，LunaTranslator 没有按游戏自动勾选的机制，所以首次仍需人工点一次。<b>「首次选文本助手」已经把最麻烦的「在几十行里找哪行对」自动化了</b>——它读画面台词填进搜索框，帮你把候选过滤到 1 行，你只需点一下。选过一次后永久保存，之后全程自动，再也不用选。
   </div>
 
   <div class="panel" style="margin-top:18px;">
