@@ -1,0 +1,12 @@
+{
+  "version": "12.1.4",
+  "source": "https://github.com/HIllya51/LunaTranslator/releases/tag/v12.1.4",
+  "license": "GPLv3",
+  "filename": "LunaTranslator_x64.zip",
+  "size": 66862594,
+  "sha256": "5e3cfaf4cec5084e4101220486c30c59178bd6f8c90ce4d1aa6aa6c36073001c",
+  "parts": 13,
+  "chunk": 5242880,
+  "width": 2,
+  "partPrefix": "luna.part"
+}

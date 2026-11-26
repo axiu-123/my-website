@@ -115,6 +115,71 @@ app.get('/pet/download', async (req, res) => {
   }
 });
 
+// LunaTranslator 游戏翻译工具镜像：与桌宠下载完全独立的一套分片 + 流式拼合。
+// 官方 GitHub release 在国内直连拉不动，这里镜像官方原 zip（SHA256 校验通过），
+// 用户从本站直连下载，桌宠「游戏翻译」的下载按钮也指向这里。
+const LUNA_DIR = path.join(PUBLIC_DIR, 'luna', 'download');
+let lunaManifest = null;
+function lunaPkg() {
+  if (!lunaManifest) {
+    lunaManifest = JSON.parse(fs.readFileSync(path.join(LUNA_DIR, 'manifest.json'), 'utf8'));
+  }
+  return lunaManifest;
+}
+app.get('/luna/download', async (req, res) => {
+  let m;
+  try { m = lunaPkg(); }
+  catch (e) { return res.status(503).type('text/plain').send('LunaTranslator 安装包尚未就绪，请稍后再试'); }
+  const total = m.size;
+  let start = 0, end = total - 1, partial = false;
+  const range = req.headers.range;
+  if (range) {
+    const mt = /^bytes=(\d*)-(\d*)$/.exec(String(range).trim());
+    if (!mt || (!mt[1] && !mt[2])) { res.set('Content-Range', 'bytes */' + total); return res.status(416).end(); }
+    partial = true;
+    if (!mt[1]) start = Math.max(0, total - Number(mt[2]));
+    else { start = Number(mt[1]); if (mt[2]) end = Math.min(Number(mt[2]), total - 1); }
+    if (start > end || start >= total) { res.set('Content-Range', 'bytes */' + total); return res.status(416).end(); }
+  }
+  res.status(partial ? 206 : 200);
+  res.set({
+    'Content-Type': 'application/zip',
+    'Content-Length': String(end - start + 1),
+    'Accept-Ranges': 'bytes',
+    'Content-Disposition': 'attachment; filename="' + m.filename + '"',
+    'Cache-Control': 'public, max-age=300'
+  });
+  if (partial) res.set('Content-Range', 'bytes ' + start + '-' + end + '/' + total);
+  if (req.method === 'HEAD') return res.end();
+  let pos = 0;
+  try {
+    for (let i = 0; i < m.parts; i++) {
+      const partSize = i === m.parts - 1 ? total - i * m.chunk : m.chunk;
+      const partStart = pos, partEnd = pos + partSize - 1;
+      pos += partSize;
+      if (partEnd < start || partStart > end) continue;
+      const from = Math.max(start, partStart) - partStart;
+      const to = Math.min(end, partEnd) - partStart;
+      const file = path.join(LUNA_DIR, m.partPrefix + String(i).padStart(m.width, '0'));
+      const rs = fs.createReadStream(file, { start: from, end: to });
+      for await (const chunk of rs) {
+        if (res.destroyed) return;
+        if (!res.write(chunk)) {
+          await new Promise((resolve) => {
+            const done = () => { res.removeListener('drain', done); res.removeListener('close', done); resolve(); };
+            res.once('drain', done); res.once('close', done);
+          });
+        }
+      }
+    }
+    res.end();
+  } catch (e) {
+    console.error('[luna/download]', e.message);
+    if (!res.headersSent) res.status(500).type('text/plain').send('下载失败：' + e.message);
+    else res.destroy();
+  }
+});
+
 // 桌宠 13 个分片是不可变内容，单独挂一年强缓存，让 Cloudflare 边缘节点缓存，
 // 避免每次都回 Render 源站（实测源站每片 5MB 要 30-40 秒）。
 app.use('/pet/parts', express.static(path.join(PUBLIC_DIR, 'pet', 'parts'), {
