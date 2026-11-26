@@ -24,7 +24,7 @@ app.use((req, res, next) => {
 });
 
 // 独立功能页路由（支持 /feature 与 /feature/ 两种写法）
-app.get(/^\/(home|translate|music|organize|dedup|pet)\/?$/, (req, res) => {
+app.get(/^\/(home|translate|music|organize|dedup|pet|luna)\/?$/, (req, res) => {
   const seg = req.path.replace(/^\/|\/$/g, '');
   res.sendFile(path.join(PUBLIC_DIR, seg, 'index.html'));
 });

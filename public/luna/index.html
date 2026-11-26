@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Galgame 一键翻译 · 桌宠游戏翻译组件</title>
+<link rel="stylesheet" href="/assets/style.css" />
+<style>
+  .luna-hero { text-align:center; padding:34px 0 20px; }
+  .luna-hero h1 { margin:0 0 10px; font-size:30px; }
+  .luna-hero p { margin:0 auto; max-width:660px; color:var(--muted); line-height:1.7; font-size:14px; }
+  .dl-row { display:flex; flex-wrap:wrap; gap:16px; justify-content:center; margin:8px 0 6px; }
+  .dl-card { flex:1 1 300px; max-width:420px; background:var(--card,#fff); border:1px solid var(--line,#e3e6f0);
+             border-radius:14px; padding:22px; box-shadow:0 2px 10px rgba(0,0,0,.04); }
+  .dl-card .tag { display:inline-block; font-size:12px; padding:3px 10px; border-radius:20px;
+                  background:#eef1ff; color:#4a54c8; margin-bottom:10px; }
+  .dl-card h3 { margin:0 0 8px; font-size:18px; }
+  .dl-card p { margin:0 0 16px; color:var(--muted); font-size:13px; line-height:1.6; }
+  .dl-card a.dl { display:block; text-align:center; padding:12px; border-radius:10px;
+                  background:linear-gradient(135deg,#5b6cff,#7b5bff); color:#fff; text-decoration:none;
+                  font-weight:700; font-size:15px; }
+  .dl-card a.dl.alt { background:linear-gradient(135deg,#1fae7d,#17a08e); }
+  .steps { counter-reset:step; list-style:none; padding:0; margin:0; }
+  .steps li { position:relative; padding:14px 0 14px 52px; border-bottom:1px dashed var(--line,#e3e6f0); line-height:1.7; font-size:14px; }
+  .steps li:last-child { border-bottom:none; }
+  .steps li::before { counter-increment:step; content:counter(step); position:absolute; left:0; top:14px;
+    width:34px; height:34px; border-radius:50%; background:#4a54c8; color:#fff; font-weight:700;
+    display:flex; align-items:center; justify-content:center; font-size:16px; }
+  .steps b { color:#3a41a8; }
+  code { background:#f2f4fb; padding:2px 7px; border-radius:5px; font-size:13px; color:#b0365b; }
+  .warn { background:#fff8e8; border-left:4px solid #f5a623; padding:14px 18px; border-radius:8px;
+          font-size:13px; line-height:1.75; color:#7a5a1f; }
+  .ok { background:#eafaf3; border-left:4px solid #1fae7d; padding:14px 18px; border-radius:8px;
+        font-size:13px; line-height:1.75; color:#1b6b52; }
+  .kv { font-size:13px; color:var(--muted); line-height:1.9; }
+  .kv b { color:var(--text,#222); }
+</style>
+</head>
+<body>
+<header class="topbar" id="topbar"></header>
+<main>
+  <div class="luna-hero">
+    <h1>🎮 Galgame 一键翻译</h1>
+    <p>给桌面版桌宠配一套「游戏翻译」能力：借助免费的 LunaTranslator 从游戏里直接读取原文（毫秒级、几乎不占 CPU），桌宠负责把译文显示在字幕浮层上。下面的组件帮你一键配好，不用去碰那些藏起来的设置。</p>
+  </div>
+
+  <div class="dl-row">
+    <div class="dl-card">
+      <span class="tag">第 1 步 · 必下</span>
+      <h3>LunaTranslator 本体</h3>
+      <p>官方 v12.1.4 免安装版，约 64MB，解压即用。<br>本站镜像直连下载，无需代理、无需碰 GitHub。</p>
+      <a class="dl" href="/luna/download">⬇ 下载安装包（64MB）</a>
+    </div>
+    <div class="dl-card">
+      <span class="tag">第 2 步 · 必下</span>
+      <h3>一键配置脚本</h3>
+      <p>仅 4KB。自动开启网络服务、切到 HOOK 模式、启动游戏并加载翻译。<br>解压后把文件夹里的两个文件放进 LunaTranslator 目录。</p>
+      <a class="dl alt" href="/luna/setup/galgame-setup.zip">⬇ 下载配置脚本（4KB）</a>
+    </div>
+  </div>
+
+  <div class="panel" style="margin-top:26px;">
+    <h2>怎么用（照着做就行）</h2>
+    <p class="desc">只针对 Galgame / 视觉小说（有文字层的游戏）。3D 游戏没有可读取的文本层，本组件不支持。</p>
+    <ol class="steps">
+      <li><b>下载并解压</b>：上面两个都下载。把「安装包」解压到一个简单目录，如 <code>D:\LunaTranslator_x64</code>（别放 C:\Program Files，路径别带中文）。</li>
+      <li><b>放进配置脚本</b>：把「配置脚本」压缩包解开，将里面的 <code>一键玩Galgame.bat</code> 和 <code>galgame-translate.ps1</code> 两个文件，复制到第 1 步解压出的 LunaTranslator 目录里（和 <code>LunaTranslator.exe</code> 同一层）。</li>
+      <li><b>双击运行一次</b>：双击 <code>一键玩Galgame.bat</code>。它会自动关掉旧进程、备份原配置、开好网络服务（端口 2333）和 HOOK 模式，并重新启动 LunaTranslator。看到绿色 <b>SUCCESS</b> 就成了。</li>
+      <li><b>首次选一次文本行</b>（约 10 秒，仅此一次）：把你的 Galgame exe 拖进 LunaTranslator 窗口，让游戏显示两三句对话，弹出的「选择文本」窗口里点一下和画面一致的那一行。<b>选过一次就永久保存</b>，以后这一步免做。</li>
+      <li><b>以后开玩</b>：再双击那个 bat，它会自动打开游戏、加载已保存的 HOOK、开始翻译。回到桌宠按 <code>Ctrl+Alt+T</code>，译文就出现在字幕浮层上。</li>
+    </ol>
+  </div>
+
+  <div class="panel" style="margin-top:18px;">
+    <h2>常见问题</h2>
+    <p class="kv">
+      <b>Q：按了 Ctrl+Alt+T 提示连不上？</b><br>
+      先看配置脚本是否跑出 SUCCESS；再看 LunaTranslator 是否还开着；端口若不是 2333，到桌宠设置面板最底部「🎮 游戏翻译（进阶）」里改。<br><br>
+      <b>Q：3D 游戏 / 《逃生》这类能翻吗？</b><br>
+      不能。这类游戏字幕是画在画面上的文字，没有可读取的文本层，HOOK 抓不到。本组件只做 Galgame。<br><br>
+      <b>Q：翻译质量不满意？</b><br>
+      桌宠默认拿到原文后用自己的翻译接口。也可以在桌宠设置面板的进阶区把译文来源切成「用 LunaTranslator 的译文」，质量取决于你在 LunaTranslator 里配的引擎。
+    </p>
+  </div>
+
+  <div class="ok" style="margin-top:18px;">
+    ✅ 隐私：配置脚本只改 LunaTranslator 自己的配置文件、只连本机 <code>127.0.0.1:2333</code>，不扫描全盘、不上传任何东西。桌宠本体不会因为你用了这个组件而增加对外请求。
+  </div>
+  <div class="warn" style="margin-top:12px;">
+    ⚠️ 首次的「选文本行」无法自动化：不同游戏内存结构不同，LunaTranslator 没有任何按游戏自动勾选的机制，必须人工对照画面点一次（约 10 秒）。选过一次后永久保存，之后全程自动。
+  </div>
+
+  <div class="panel" style="margin-top:18px;">
+    <h2>来源与许可</h2>
+    <p class="kv">
+      LunaTranslator 由 <b>HIllya51</b> 开发，采用 <b>GPLv3</b> 许可证。本站提供的是官方 v12.1.4 原包的镜像（SHA256 校验一致，未作任何修改），仅方便国内直连下载。<br>
+      官方项目：<a href="https://github.com/HIllya51/LunaTranslator" target="_blank" rel="noopener">github.com/HIllya51/LunaTranslator</a><br>
+      一键配置脚本为本组件编写，不改变 LunaTranslator 本体，也不捆绑任何第三方二进制。
+    </p>
+  </div>
+</main>
+<footer class="foot">多功能聚合站 · 本地可运行 · Node + Express</footer>
+<script src="/assets/common.js"></script>
+<script>renderNav('pet');</script>
+</body>
+</html>
